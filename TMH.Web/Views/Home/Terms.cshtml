@@ -1,0 +1,334 @@
+@{
+    ViewBag.Title = "Điều khoản sử dụng — Phòng Khám TMH";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+.policy-wrap {
+    max-width: 860px;
+    margin: 48px auto 80px;
+    padding: 0 20px;
+}
+.policy-hero {
+    background: linear-gradient(135deg, #0a4d7c 0%, #1565c0 100%);
+    border-radius: 16px;
+    padding: 48px 48px 40px;
+    color: #fff;
+    margin-bottom: 40px;
+}
+.policy-hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+}
+.policy-hero h1 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 34px;
+    font-weight: 700;
+    margin: 0 0 10px;
+}
+.policy-hero-meta {
+    font-size: 13px;
+    opacity: .75;
+    margin: 0;
+}
+.policy-toc {
+    background: #f0f8ff;
+    border: 1px solid #d4e8f5;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+}
+.policy-toc h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0a4d7c;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 0 0 14px;
+}
+.policy-toc ol {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 24px;
+}
+.policy-toc li a {
+    font-size: 13px;
+    color: #1a6fa8;
+    text-decoration: none;
+}
+.policy-toc li a:hover { text-decoration: underline; }
+
+.policy-section {
+    margin-bottom: 40px;
+    scroll-margin-top: 80px;
+}
+.policy-section-hd {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e3f0fb;
+}
+.section-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #0a4d7c;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.policy-section-hd h2 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0a4d7c;
+    margin: 0;
+}
+.policy-section p {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.8;
+    margin-bottom: 12px;
+}
+.policy-section ul, .policy-section ol {
+    padding-left: 22px;
+    margin-bottom: 12px;
+}
+.policy-section li {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.8;
+    margin-bottom: 4px;
+}
+.policy-highlight {
+    background: #fff9e6;
+    border-left: 4px solid #c9a227;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13.5px;
+    color: #5a4010;
+    line-height: 1.7;
+}
+.policy-info-box {
+    background: #f0f8ff;
+    border: 1px solid #c2dff5;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+}
+.policy-info-box p { margin: 0; font-size: 13.5px; color: #1a4d72; }
+.policy-contact-box {
+    background: linear-gradient(135deg, #f0f8ff, #e8f4fd);
+    border: 1px solid #c2dff5;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-top: 48px;
+    text-align: center;
+}
+.policy-contact-box h3 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 18px;
+    color: #0a4d7c;
+    margin: 0 0 8px;
+}
+.policy-contact-box p { font-size: 13.5px; color: #5a7a92; margin: 0 0 4px; }
+.policy-contact-box a { color: #1a6fa8; text-decoration: none; }
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #1a6fa8;
+    text-decoration: none;
+    margin-bottom: 24px;
+}
+.back-link:hover { text-decoration: underline; }
+</style>
+
+<div class="policy-wrap">
+    <a class="back-link" asp-controller="Account" asp-action="Register">← Quay lại</a>
+
+    <div class="policy-hero">
+        <div class="policy-hero-tag">Pháp lý</div>
+        <h1>Điều khoản Sử dụng</h1>
+        <p class="policy-hero-meta">Phiên bản 1.0 &nbsp;·&nbsp; Có hiệu lực từ ngày 01/01/2026 &nbsp;·&nbsp; Phòng Khám Tai Mũi Họng TMH</p>
+    </div>
+
+    <div class="policy-toc">
+        <h4>Nội dung</h4>
+        <ol>
+            <li><a href="#s1">Chấp thuận điều khoản</a></li>
+            <li><a href="#s2">Dịch vụ cung cấp</a></li>
+            <li><a href="#s3">Tài khoản người dùng</a></li>
+            <li><a href="#s4">Quy tắc sử dụng</a></li>
+            <li><a href="#s5">Đặt lịch & hủy lịch</a></li>
+            <li><a href="#s6">Thanh toán</a></li>
+            <li><a href="#s7">Giới hạn trách nhiệm</a></li>
+            <li><a href="#s8">Sở hữu trí tuệ</a></li>
+            <li><a href="#s9">Chấm dứt dịch vụ</a></li>
+            <li><a href="#s10">Thay đổi điều khoản</a></li>
+        </ol>
+    </div>
+
+    <div class="policy-highlight">
+        Vui lòng đọc kỹ các điều khoản dưới đây trước khi sử dụng hệ thống. Bằng cách tạo tài khoản hoặc sử dụng dịch vụ, bạn xác nhận đã đọc, hiểu và đồng ý bị ràng buộc bởi các điều khoản này.
+    </div>
+
+    <div class="policy-section" id="s1">
+        <div class="policy-section-hd">
+            <div class="section-num">1</div>
+            <h2>Chấp thuận Điều khoản</h2>
+        </div>
+        <p>Hệ thống quản lý phòng khám Tai Mũi Họng (TMH) là nền tảng trực tuyến kết nối bệnh nhân với các bác sĩ chuyên khoa. Khi bạn đăng ký tài khoản, đặt lịch khám hoặc sử dụng bất kỳ tính năng nào của hệ thống, bạn đồng ý chịu ràng buộc bởi Điều khoản Sử dụng này.</p>
+        <p>Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng không sử dụng hệ thống.</p>
+    </div>
+
+    <div class="policy-section" id="s2">
+        <div class="policy-section-hd">
+            <div class="section-num">2</div>
+            <h2>Dịch vụ Cung cấp</h2>
+        </div>
+        <p>Hệ thống TMH cung cấp các dịch vụ sau:</p>
+        <ul>
+            <li>Đặt lịch khám bệnh trực tuyến với bác sĩ chuyên khoa Tai Mũi Họng</li>
+            <li>Xem lịch sử khám bệnh và kết quả chẩn đoán</li>
+            <li>Đánh giá và nhận xét dịch vụ khám bệnh</li>
+            <li>Tư vấn sức khỏe sơ bộ qua chatbot AI (không thay thế tư vấn y tế chuyên sâu)</li>
+            <li>Thanh toán phí dịch vụ qua cổng VNPay</li>
+            <li>Nhận thông báo nhắc lịch khám qua email</li>
+        </ul>
+        <div class="policy-info-box">
+            <p><strong>Lưu ý:</strong> Chatbot AI trong hệ thống chỉ hỗ trợ tư vấn thông tin sơ bộ, không phải chẩn đoán y tế chính thức. Mọi quyết định y tế quan trọng cần được thực hiện bởi bác sĩ có chuyên môn.</p>
+        </div>
+    </div>
+
+    <div class="policy-section" id="s3">
+        <div class="policy-section-hd">
+            <div class="section-num">3</div>
+            <h2>Tài khoản Người dùng</h2>
+        </div>
+        <p>Để sử dụng đầy đủ dịch vụ, bạn cần tạo tài khoản với thông tin chính xác và đầy đủ.</p>
+        <ul>
+            <li>Bạn chịu trách nhiệm bảo mật tên đăng nhập và mật khẩu của mình</li>
+            <li>Không chia sẻ tài khoản với người khác hoặc sử dụng tài khoản của người khác</li>
+            <li>Thông báo ngay cho chúng tôi nếu phát hiện tài khoản bị truy cập trái phép</li>
+            <li>Thông tin cá nhân (họ tên, ngày sinh, CCCD) phải chính xác để phục vụ khám bệnh</li>
+            <li>Mỗi cá nhân chỉ được đăng ký một tài khoản bệnh nhân</li>
+        </ul>
+        <p>Chúng tôi có quyền tạm khóa hoặc xóa tài khoản nếu phát hiện vi phạm điều khoản.</p>
+    </div>
+
+    <div class="policy-section" id="s4">
+        <div class="policy-section-hd">
+            <div class="section-num">4</div>
+            <h2>Quy tắc Sử dụng</h2>
+        </div>
+        <p>Khi sử dụng hệ thống, bạn cam kết <strong>không</strong>:</p>
+        <ul>
+            <li>Cung cấp thông tin sai lệch về bản thân hoặc tình trạng sức khỏe</li>
+            <li>Đặt lịch khám ảo, không có mục đích khám thực sự</li>
+            <li>Sử dụng ngôn ngữ thô tục, xúc phạm trong đánh giá hoặc chat</li>
+            <li>Tấn công, xâm nhập hệ thống hoặc cố ý gây gián đoạn dịch vụ</li>
+            <li>Thu thập thông tin cá nhân của người dùng khác trái phép</li>
+            <li>Sử dụng hệ thống cho mục đích thương mại không được phép</li>
+        </ul>
+    </div>
+
+    <div class="policy-section" id="s5">
+        <div class="policy-section-hd">
+            <div class="section-num">5</div>
+            <h2>Đặt lịch & Hủy lịch</h2>
+        </div>
+        <ul>
+            <li>Lịch khám được xác nhận khi hệ thống gửi thông báo xác nhận qua email</li>
+            <li>Bạn có thể hủy lịch khám trước giờ hẹn ít nhất <strong>2 giờ</strong></li>
+            <li>Hủy lịch muộn hơn 2 giờ trước giờ hẹn có thể bị tính phí hủy theo chính sách phòng khám</li>
+            <li>Vắng mặt không báo trước 3 lần liên tiếp có thể dẫn đến tạm khóa tài khoản</li>
+            <li>Phòng khám có quyền từ chối hoặc điều chỉnh lịch hẹn trong trường hợp bất khả kháng</li>
+        </ul>
+    </div>
+
+    <div class="policy-section" id="s6">
+        <div class="policy-section-hd">
+            <div class="section-num">6</div>
+            <h2>Thanh toán</h2>
+        </div>
+        <p>Hệ thống hỗ trợ thanh toán trực tuyến qua cổng thanh toán VNPay. Mọi giao dịch được mã hóa và bảo mật theo tiêu chuẩn PCI-DSS.</p>
+        <ul>
+            <li>Phí dịch vụ được hiển thị rõ ràng trước khi xác nhận thanh toán</li>
+            <li>Hóa đơn điện tử được gửi về email sau khi thanh toán thành công</li>
+            <li>Hoàn tiền trong vòng 5-7 ngày làm việc nếu lịch bị hủy do lỗi hệ thống</li>
+            <li>Chúng tôi không lưu trữ thông tin thẻ tín dụng/ghi nợ của bạn</li>
+        </ul>
+    </div>
+
+    <div class="policy-section" id="s7">
+        <div class="policy-section-hd">
+            <div class="section-num">7</div>
+            <h2>Giới hạn Trách nhiệm</h2>
+        </div>
+        <p>Hệ thống TMH là nền tảng kết nối, không phải tổ chức y tế trực tiếp cung cấp dịch vụ khám chữa bệnh. Do đó:</p>
+        <ul>
+            <li>Chúng tôi không chịu trách nhiệm về chất lượng chẩn đoán và điều trị của bác sĩ</li>
+            <li>Thông tin tư vấn từ chatbot AI mang tính tham khảo, không thay thế ý kiến bác sĩ</li>
+            <li>Chúng tôi không chịu trách nhiệm về các tổn thất phát sinh từ việc sử dụng sai mục đích</li>
+            <li>Trong trường hợp khẩn cấp về sức khỏe, hãy gọi <strong>115</strong> hoặc đến cơ sở y tế gần nhất</li>
+        </ul>
+    </div>
+
+    <div class="policy-section" id="s8">
+        <div class="policy-section-hd">
+            <div class="section-num">8</div>
+            <h2>Sở hữu Trí tuệ</h2>
+        </div>
+        <p>Toàn bộ nội dung trên hệ thống TMH bao gồm giao diện, logo, bài viết y tế, mã nguồn phần mềm thuộc quyền sở hữu của Phòng Khám TMH hoặc đối tác được cấp phép.</p>
+        <p>Bạn không được sao chép, phân phối, chỉnh sửa hoặc sử dụng nội dung này cho mục đích thương mại mà không có sự cho phép bằng văn bản.</p>
+    </div>
+
+    <div class="policy-section" id="s9">
+        <div class="policy-section-hd">
+            <div class="section-num">9</div>
+            <h2>Chấm dứt Dịch vụ</h2>
+        </div>
+        <p>Chúng tôi có quyền tạm ngừng hoặc chấm dứt quyền truy cập của bạn nếu:</p>
+        <ul>
+            <li>Phát hiện vi phạm Điều khoản Sử dụng này</li>
+            <li>Hành vi gian lận hoặc gây hại cho người dùng khác</li>
+            <li>Theo yêu cầu của cơ quan pháp luật có thẩm quyền</li>
+        </ul>
+        <p>Bạn cũng có quyền xóa tài khoản bất kỳ lúc nào bằng cách liên hệ bộ phận hỗ trợ.</p>
+    </div>
+
+    <div class="policy-section" id="s10">
+        <div class="policy-section-hd">
+            <div class="section-num">10</div>
+            <h2>Thay đổi Điều khoản</h2>
+        </div>
+        <p>Chúng tôi có thể cập nhật Điều khoản Sử dụng theo thời gian. Khi có thay đổi quan trọng, chúng tôi sẽ thông báo qua email hoặc thông báo nổi bật trên hệ thống trước ít nhất <strong>7 ngày</strong>.</p>
+        <p>Việc tiếp tục sử dụng hệ thống sau khi thay đổi có hiệu lực đồng nghĩa với việc bạn chấp thuận điều khoản mới.</p>
+    </div>
+
+    <div class="policy-contact-box">
+        <h3>Có thắc mắc?</h3>
+        <p>Liên hệ bộ phận hỗ trợ pháp lý của chúng tôi</p>
+        <p>Email: <a href="mailto:support@tmh.vn">support@tmh.vn</a> &nbsp;·&nbsp; Hotline: <strong>1900 6868</strong></p>
+        <p style="margin-top:8px;font-size:12px;color:#8aa5bd;">Giờ làm việc: Thứ 2 – Thứ 6, 8:00 – 17:00</p>
+    </div>
+</div>

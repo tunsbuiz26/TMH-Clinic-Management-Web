@@ -1,0 +1,1921 @@
+@model List<TMH.Shared.DTOs.DoctorScheduleDto>
+@{
+    ViewBag.Title = "Đặt lịch khám";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var patients = ViewBag.Patients as List<TMH.Shared.DTOs.PatientDto> ?? new List<TMH.Shared.DTOs.PatientDto>();
+    var preselectedDoctorId = Context.Request.Query["doctorId"].ToString();
+}
+<style>
+    @@keyframes pulse-green {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(34,197,94,0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 0 7px rgba(34,197,94,0);
+        }
+    }
+
+    @@keyframes dot-blink {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.4;
+            transform: scale(0.75);
+        }
+    }
+
+    .book-wrap {
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .book-title {
+        font-family: 'Crimson Pro',serif;
+        font-size: 28px;
+        font-weight: 600;
+        color: #0a4d7c;
+        margin-bottom: 6px;
+    }
+
+    .book-sub {
+        font-size: 13px;
+        color: #7a9bb0;
+        margin-bottom: 28px;
+    }
+
+    .step-bar {
+        display: flex;
+        gap: 0;
+        margin-bottom: 28px;
+    }
+
+    .step-item {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #7a9bb0;
+        border-bottom: 2px solid #d4e8f5;
+    }
+
+        .step-item.active {
+            color: #0a4d7c;
+            border-color: #0a4d7c;
+        }
+
+        .step-item.done {
+            color: #2d7a52;
+            border-color: #2d7a52;
+        }
+
+    /* ===== FILTER CHIPS ===== */
+    .filter-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+    .filter-chip {
+        height: 30px;
+        padding: 0 14px;
+        border: 1.5px solid #d4e8f5;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #7a9bb0;
+        background: #fff;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: all .15s;
+        white-space: nowrap;
+    }
+    .filter-chip:hover { border-color: #1a6fa8; color: #1a6fa8; background: #f0f8ff; }
+    .filter-chip.active { border-color: #0a4d7c; color: #0a4d7c; background: #e8f4fd; font-weight: 600; }
+
+    .doctor-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .doc-card {
+        border: 1.5px solid #d4e8f5;
+        border-radius: 12px;
+        padding: 16px;
+        cursor: pointer;
+        transition: border-color .15s,background .15s;
+    }
+
+        .doc-card:hover {
+            border-color: #1a6fa8;
+            background: #f0f8ff;
+        }
+
+        .doc-card.selected {
+            border-color: #0a4d7c;
+            background: #e8f4fd;
+        }
+
+        /* Bác sĩ được AI gợi ý */
+        .doc-card.ai-recommended {
+            border-color: #0a4d7c;
+            box-shadow: 0 0 0 3px rgba(10,77,124,.12);
+            position: relative;
+        }
+        .doc-card.ai-recommended::before {
+            content: '✦ AI Gợi ý';
+            position: absolute;
+            top: -1px; right: -1px;
+            background: linear-gradient(90deg, #0a4d7c, #1a6fa8);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 0 11px 0 8px;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        /* Bác sĩ đã từng khám */
+        .doc-card.past-doctor {
+            border-color: #2d7a52;
+            box-shadow: 0 0 0 2px rgba(45,122,82,.10);
+            position: relative;
+        }
+        .doc-card.past-doctor::before {
+            content: '✔ Đã từng khám';
+            position: absolute;
+            top: -1px; right: -1px;
+            background: linear-gradient(90deg, #2d7a52, #3a9966);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 0 11px 0 8px;
+            letter-spacing: .04em;
+        }
+
+    /* Bác sĩ hết lịch — không cho click */
+    .doc-card--unavailable {
+        opacity: 0.75;
+        cursor: default;
+        border-color: #e2e8f0;
+        background: #f8fafc;
+    }
+    .doc-card--unavailable:hover {
+        border-color: #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .doc-slots--full {
+        color: #f59e0b;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .doc-rating {
+        font-size: 12px;
+        color: #f59e0b;
+        margin-top: 4px;
+    }
+    .doc-rating-none {
+        color: #94a3b8;
+    }
+
+    .btn-pending-booking {
+        margin-top: 10px;
+        width: 100%;
+        padding: 7px 0;
+        background: #fff;
+        border: 1.5px solid #d97706;
+        color: #92400e;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background .15s;
+    }
+    .btn-pending-booking:hover {
+        background: #fef9c3;
+    }
+
+    /* ===== PAST DOCTOR SECTION ===== */
+    .past-doc-section {
+        margin-bottom: 20px;
+        display: none;
+    }
+    .past-doc-label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #2d7a52;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .past-doc-label::before {
+        content: '';
+        display: inline-block;
+        width: 3px; height: 14px;
+        background: #2d7a52;
+        border-radius: 2px;
+    }
+
+    /* ===== AI RESULT LABEL ===== */
+    .ai-rec-result-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(90deg, #0a4d7c, #1a6fa8);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 20px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+
+    .doc-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #0a4d7c;
+        color: #fff;
+        font-family: 'Crimson Pro',serif;
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .doc-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #0a4d7c;
+        margin-bottom: 3px;
+    }
+
+    .doc-spec {
+        font-size: 11px;
+        color: #c9a227;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .doc-slots {
+        font-size: 11px;
+        color: #7a9bb0;
+    }
+
+    /* ===== AI RECOMMENDATION PANEL ===== */
+    .ai-rec-panel {
+        background: linear-gradient(135deg, #f0f8ff 0%, #e8f4fd 100%);
+        border: 1.5px solid #b3d7f0;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .ai-rec-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    .ai-rec-badge {
+        background: linear-gradient(90deg, #0a4d7c, #1a6fa8);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .ai-rec-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #0a4d7c;
+    }
+    .ai-rec-sub {
+        font-size: 11.5px;
+        color: #6b8fa8;
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+    .ai-rec-input-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    .ai-rec-textarea {
+        flex: 1;
+        height: 70px;
+        border: 1.5px solid #b3d7f0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 13px;
+        color: #0d2d44;
+        background: #fff;
+        outline: none;
+        font-family: 'DM Sans', sans-serif;
+        resize: none;
+        transition: border-color .15s;
+        box-sizing: border-box;
+    }
+    .ai-rec-textarea:focus {
+        border-color: #0a4d7c;
+        box-shadow: 0 0 0 3px rgba(10,77,124,.08);
+    }
+    .ai-rec-btn {
+        height: 70px;
+        padding: 0 18px;
+        background: linear-gradient(135deg, #0a4d7c, #1a6fa8);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        white-space: nowrap;
+        transition: all .18s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-width: 110px;
+    }
+    .ai-rec-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #083d62, #155d8a);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(10,77,124,.25);
+    }
+    .ai-rec-btn:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    /* Kết quả gợi ý */
+    .ai-rec-result {
+        margin-top: 14px;
+        background: #fff;
+        border: 1.5px solid #0a4d7c;
+        border-radius: 12px;
+        padding: 16px 18px;
+        display: none;
+        animation: fadeInUp .3s ease;
+    }
+    @@keyframes fadeInUp {
+        from { opacity:0; transform:translateY(8px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+    .ai-rec-result-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 10px;
+    }
+    .ai-rec-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0a4d7c, #1a6fa8);
+        color: #fff;
+        font-family: 'Crimson Pro', serif;
+        font-size: 17px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .ai-rec-doctor-name  { font-size: 14px; font-weight: 700; color: #0a4d7c; margin-bottom: 2px; }
+    .ai-rec-doctor-spec  { font-size: 11.5px; color: #c9a227; font-weight: 600; }
+    .ai-rec-reason {
+        font-size: 12.5px;
+        color: #3a5a72;
+        line-height: 1.65;
+        margin-bottom: 14px;
+        padding: 10px 14px;
+        background: #f5fbff;
+        border-radius: 8px;
+        border-left: 3px solid #1a6fa8;
+    }
+    .ai-rec-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .ai-rec-select-btn {
+        padding: 9px 20px;
+        background: #0a4d7c;
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background .15s;
+    }
+    .ai-rec-select-btn:hover { background: #083d62; }
+    .ai-rec-dismiss {
+        font-size: 12px;
+        color: #94a3b8;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        padding: 0;
+        text-decoration: underline;
+    }
+    .ai-rec-dismiss:hover { color: #64748b; }
+    .ai-rec-error {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #c0392b;
+        display: none;
+    }
+    /* Loading spinner nhỏ */
+    .ai-spin {
+        display: inline-block;
+        width: 14px; height: 14px;
+        border: 2px solid rgba(255,255,255,.4);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+        vertical-align: middle;
+    }
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Slot */
+    .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: 10px;
+        margin-bottom: 24px;
+    }
+
+    .slot-btn {
+        position: relative;
+        border: 1.5px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 12px 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #3a5a72;
+        cursor: pointer;
+        text-align: center;
+        background: #f0fdf4;
+        transition: all .15s;
+        font-family: 'DM Sans',sans-serif;
+        animation: pulse-green 2.4s ease-in-out infinite;
+    }
+
+        .slot-btn:hover {
+            border-color: #1a6fa8;
+            background: #f0f8ff;
+            color: #0a4d7c;
+            animation: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26,111,168,0.12);
+        }
+
+        .slot-btn.selected {
+            border-color: #0a4d7c;
+            background: #0a4d7c;
+            color: #fff;
+            animation: none;
+        }
+
+            .slot-btn.selected .slot-dot {
+                background: #fff;
+            }
+
+            .slot-btn.selected .slot-available {
+                color: rgba(255,255,255,0.8);
+                border-color: rgba(255,255,255,0.3);
+                background: rgba(255,255,255,0.1);
+            }
+
+    /* Ca đã qua giờ */
+    .slot-btn.expired {
+        border-color: #e2e8f0;
+        background: #f8fafc;
+        color: #94a3b8;
+        cursor: not-allowed;
+        animation: none;
+        opacity: 0.7;
+    }
+    .slot-btn.expired:hover {
+        border-color: #e2e8f0;
+        background: #f8fafc;
+        color: #94a3b8;
+        transform: none;
+        box-shadow: none;
+    }
+    .slot-expired-badge {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 6px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #94a3b8;
+        font-size: 10px;
+        font-weight: 500;
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    /* Chấm xanh nhấp nháy */
+    .slot-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        background: #22c55e;
+        border-radius: 50%;
+        margin-right: 4px;
+        vertical-align: middle;
+        animation: dot-blink 1.6s ease-in-out infinite;
+    }
+    /* Badge "Còn X chỗ" */
+    .slot-available {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 6px;
+        background: #dcfce7;
+        border: 1px solid #bbf7d0;
+        color: #15803d;
+        font-size: 10px;
+        font-weight: 500;
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    .form-section {
+        background: #fff;
+        border: 1px solid #d4e8f5;
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #0a4d7c;
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #d4e8f5;
+    }
+
+    .form-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: #3a5a72;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        height: 40px;
+        border: 1px solid #d4e8f5;
+        border-radius: 9px;
+        padding: 0 12px;
+        font-size: 13px;
+        color: #0d2d44;
+        background: #fff;
+        outline: none;
+        font-family: 'DM Sans',sans-serif;
+        margin-bottom: 14px;
+        box-sizing: border-box;
+    }
+
+        .form-control:focus {
+            border-color: #1a6fa8;
+            box-shadow: 0 0 0 3px rgba(26,111,168,.09);
+        }
+
+    .form-textarea {
+        width: 100%;
+        height: 80px;
+        border: 1px solid #d4e8f5;
+        border-radius: 9px;
+        padding: 10px 12px;
+        font-size: 13px;
+        color: #0d2d44;
+        background: #fff;
+        outline: none;
+        font-family: 'DM Sans',sans-serif;
+        resize: none;
+        box-sizing: border-box;
+    }
+
+        .form-textarea:focus {
+            border-color: #1a6fa8;
+            box-shadow: 0 0 0 3px rgba(26,111,168,.09);
+        }
+
+    .summary-box {
+        background: #f0f8ff;
+        border: 1px solid #d4e8f5;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        padding: 4px 0;
+    }
+
+        .summary-row .lbl {
+            color: #7a9bb0;
+        }
+
+        .summary-row .val {
+            font-weight: 500;
+            color: #0a4d7c;
+        }
+
+    .btn-submit {
+        width: 100%;
+        height: 44px;
+        background: #0a4d7c;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'DM Sans',sans-serif;
+        transition: background .15s;
+    }
+
+        .btn-submit:hover {
+            background: #1a6fa8;
+        }
+
+        .btn-submit:disabled {
+            background: #9bb5c8;
+            cursor: not-allowed;
+        }
+
+    .book-card {
+        background: #f5faff;
+        border: 1px solid #c8dff0;
+        border-radius: 18px;
+        padding: 32px 36px;
+        box-shadow: 0 4px 24px rgba(10,77,124,.08);
+        margin-bottom: 24px;
+    }
+
+    .no-slots {
+        text-align: center;
+        padding: 20px;
+        color: #7a9bb0;
+        font-size: 13px;
+    }
+
+    .pay-method-row {
+        display: flex;
+        gap: 12px;
+        margin: 10px 0 16px;
+    }
+
+    .pay-card {
+        flex: 1;
+        border: 2px solid #d4e8f5;
+        border-radius: 12px;
+        padding: 14px 10px;
+        cursor: pointer;
+        text-align: center;
+        transition: all .2s;
+        background: #fff;
+        user-select: none;
+    }
+
+        .pay-card:hover { border-color: #0a4d7c; }
+
+        .pay-card.selected {
+            border-color: #0a4d7c;
+            background: #e8f4fd;
+            box-shadow: 0 0 0 3px rgba(10,77,124,.12);
+        }
+
+    .pay-icon  { font-size: 22px; display: block; margin-bottom: 4px; }
+    .pay-title { font-size: 13px; font-weight: 600; color: #0a4d7c; }
+    .pay-desc  { font-size: 11px; color: #7a9bb0; margin-top: 3px; }
+
+    .btn-confirm {
+        width: 100%;
+        height: 48px;
+        background: #0a4d7c;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background .15s;
+        margin-top: 4px;
+    }
+
+        .btn-confirm:disabled { background: #b0c8d9; cursor: not-allowed; }
+        .btn-confirm:not(:disabled):hover { background: #083d62; }
+
+    .patient-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+
+        .patient-row select {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+    .btn-add-profile {
+        height: 40px;
+        padding: 0 14px;
+        background: #fff;
+        border: 1px solid #0a4d7c;
+        color: #0a4d7c;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        font-family: 'DM Sans',sans-serif;
+        transition: all .15s;
+        flex-shrink: 0;
+    }
+
+        .btn-add-profile:hover {
+            background: #0a4d7c;
+            color: #fff;
+        }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.45);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 28px;
+        width: 420px;
+        max-width: 90vw;
+    }
+
+    .modal-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #0a4d7c;
+        margin-bottom: 20px;
+    }
+
+    .modal-footer {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-modal-cancel {
+        flex: 1;
+        height: 40px;
+        background: #f5f5f5;
+        color: #555;
+        border: none;
+        border-radius: 9px;
+        font-size: 13px;
+        cursor: pointer;
+        font-family: 'DM Sans',sans-serif;
+    }
+
+    .btn-modal-save {
+        flex: 2;
+        height: 40px;
+        background: #0a4d7c;
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'DM Sans',sans-serif;
+    }
+
+        .btn-modal-save:hover {
+            background: #1a6fa8;
+        }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .msg-err {
+        background: #fdecea;
+        border: 1px solid #f5c6c6;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        color: #c0392b;
+        font-size: 12px;
+        display: none;
+    }
+</style>
+
+<div class="book-wrap">
+<div class="book-card">
+    <div class="book-title">Đặt lịch khám Tai Mũi Họng</div>
+    <div class="book-sub">Mô tả triệu chứng để AI gợi ý bác sĩ chuyên khoa phù hợp nhất</div>
+
+    <div class="step-bar">
+        <div class="step-item active" id="step1-bar">1. Chọn bác sĩ</div>
+        <div class="step-item" id="step2-bar">2. Chọn khung giờ</div>
+        <div class="step-item" id="step3-bar">3. Xác nhận</div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#2d7a52;font-size:13px;">
+            ✅ @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background:#fdecea;border:1px solid #f5c6c6;border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#c0392b;font-size:13px;">
+            ❌ @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="no-slots">Hiện chưa có lịch làm việc nào. Vui lòng quay lại sau.</div>
+    }
+    else
+    {
+        <form asp-action="Book" asp-controller="Booking" method="post" id="bookForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="patientId" id="hPatientId" value="" />
+            <input type="hidden" name="scheduleId" id="hScheduleId" value="" />
+
+            <!-- Bước 1: Mô tả triệu chứng & Chọn bác sĩ (hiện ngay khi load) -->
+            <div class="form-section" id="sec1">
+                <div class="form-section-title">Chọn bác sĩ phù hợp</div>
+
+                <!-- ===== AI SYMPTOM SECTION (nổi bật, là CTA chính) ===== -->
+                <div class="ai-rec-panel" id="aiRecPanel">
+                    <div class="ai-rec-header">
+                        <span class="ai-rec-badge">✦ AI Gợi ý</span>
+                        <span class="ai-rec-title">Mô tả triệu chứng để tìm bác sĩ phù hợp nhất</span>
+                    </div>
+                    <p class="ai-rec-sub">
+                        Nhập triệu chứng bạn đang gặp — AI sẽ phân tích và gợi ý bác sĩ chuyên khoa phù hợp nhất.
+                    </p>
+                    <div class="ai-rec-input-row">
+                        <textarea id="aiSymptoms" class="ai-rec-textarea"
+                                  placeholder="Ví dụ: Ù tai 2 tuần nay, nghe kém, đôi khi chóng mặt..."></textarea>
+                        <button type="button" class="ai-rec-btn" id="aiRecBtn" onclick="getAiRecommendation()">
+                            <span id="aiRecBtnIcon">🔍</span>
+                            <span id="aiRecBtnText">Tìm bác sĩ</span>
+                        </button>
+                    </div>
+                    <div style="margin-top:14px;text-align:center;">
+                        <button type="button" onclick="showDoctorSection()"
+                                style="background:#f0f8ff;border:1.5px solid #1a6fa8;color:#0a4d7c;padding:8px 22px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:6px;"
+                                onmouseover="this.style.background='#daeef9';this.style.borderColor='#0a4d7c'"
+                                onmouseout="this.style.background='#f0f8ff';this.style.borderColor='#1a6fa8'">
+                            <span style="font-size:15px">📋</span> Bỏ qua, chọn bác sĩ ngay
+                        </button>
+                    </div>
+                    <div class="ai-rec-error" id="aiRecError"></div>
+
+                    <!-- Kết quả gợi ý AI (inline, xuất hiện sau khi phân tích) -->
+                    <div class="ai-rec-result" id="aiRecResult">
+                        <div class="ai-rec-result-label">✦ AI Gợi ý bác sĩ phù hợp với triệu chứng của bạn</div>
+                        <div class="ai-rec-result-header">
+                            <div class="ai-rec-avatar" id="aiDocAvatar"></div>
+                            <div>
+                                <div class="ai-rec-doctor-name" id="aiDocName"></div>
+                                <div class="ai-rec-doctor-spec" id="aiDocSpec"></div>
+                            </div>
+                        </div>
+                        <div class="ai-rec-reason" id="aiDocReason"></div>
+                        <div class="ai-rec-actions">
+                            <button type="button" class="ai-rec-select-btn"
+                                    onclick="applyAiRecommendation()">
+                                Chọn bác sĩ này →
+                            </button>
+                            <button type="button" class="ai-rec-dismiss"
+                                    onclick="dismissAiResult()">Bỏ qua, tự chọn bác sĩ</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===== END AI SECTION ===== -->
+
+                <!-- Khu vực tự chọn bác sĩ — ẩn ban đầu, hiện khi bấm "Bỏ qua, tự chọn" -->
+                <div id="doctorSection" style="display:none">
+
+                    <!-- Bác sĩ đã từng khám (nếu có) -->
+                    <div class="past-doc-section" id="pastDoctorSection">
+                        <div class="past-doc-label">Bác sĩ bạn đã từng khám</div>
+                        <div class="doctor-grid" id="pastDoctorGrid"></div>
+                    </div>
+
+                    <!-- Filter chips — chỉ Tai / Mũi / Họng -->
+                    <div class="filter-chips" id="filterChips">
+                        <span style="font-size:11px;color:#94a3b8;line-height:30px;margin-right:4px;">Lọc theo khoa:</span>
+                        <button type="button" class="filter-chip" id="chip-tai"  onclick="filterDoctorGrid('tai',  this)">👂 Tai</button>
+                        <button type="button" class="filter-chip" id="chip-mui"  onclick="filterDoctorGrid('mui',  this)">👃 Mũi</button>
+                        <button type="button" class="filter-chip" id="chip-hong" onclick="filterDoctorGrid('hong', this)">🗣️ Họng</button>
+                    </div>
+
+                    <!-- Doctor grid (render qua JS) -->
+                    <div class="doctor-grid" id="doctorGrid"></div>
+                </div>
+            </div>
+
+            <!-- Bước 2: Chọn ngày + khung giờ -->
+            <div class="form-section" id="sec2" style="display:none">
+                <div class="form-section-title">
+                    Chọn ca khám —
+                    <span id="selDoctorName" style="color:#c9a227"></span>
+                    <span style="font-size:11px;color:#7a9bb0;font-weight:400;margin-left:8px;">
+                        <span style="display:inline-block;width:7px;height:7px;background:#22c55e;border-radius:50%;margin-right:3px;vertical-align:middle;"></span>
+                        Ô xanh = còn chỗ trống
+                    </span>
+                </div>
+
+                <!-- Date picker -->
+                <div style="margin-bottom:20px;">
+                    <label class="form-label">Chọn ngày khám</label>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <input type="date" id="datePicker" class="form-control"
+                               style="max-width:200px;margin-bottom:0;"
+                               onchange="onDateChange()" />
+                        <div id="dateLoadingSpinner" style="display:none;font-size:12px;color:#7a9bb0;">
+                            <span style="display:inline-block;width:14px;height:14px;border:2px solid #d4e8f5;border-top-color:#0a4d7c;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;"></span>
+                            Đang tải ca khám...
+                        </div>
+                    </div>
+                    <div id="dateHint" style="font-size:12px;color:#7a9bb0;margin-top:6px;">
+                        📅 Vui lòng chọn ngày để xem các ca khám còn trống
+                    </div>
+                </div>
+
+                <div class="slot-grid" id="slotGrid">
+                    <p style="color:#7a9bb0;font-size:13px;grid-column:1/-1;">Chọn ngày để xem ca khám</p>
+                </div>
+            </div>
+
+            <!-- Bước 3: Hồ sơ + ghi chú -->
+            <div class="form-section" id="sec3" style="display:none">
+                <div class="form-section-title">Thông tin bổ sung</div>
+                <label class="form-label">Hồ sơ khám bệnh</label>
+                <div class="patient-row">
+                    <select class="form-control" id="selPatient"
+                            onchange="document.getElementById('hPatientId').value=this.value">
+                        <option value="">-- Chọn hồ sơ --</option>
+                        @foreach (var p in patients)
+                        {
+                            <option value="@p.Id">@p.DisplayLabel</option>
+                        }
+                    </select>
+                    <button type="button" class="btn-add-profile" onclick="openModal()">+ Hồ sơ mới</button>
+                </div>
+                <label class="form-label">Ghi chú cho bác sĩ (tuỳ chọn)</label>
+                <textarea class="form-textarea" name="note"
+                      placeholder="Mô tả triệu chứng, tiền sử bệnh liên quan..."></textarea>
+            </div>
+
+            <!-- Tóm tắt -->
+            <div class="summary-box" id="summaryBox" style="display:none">
+                <div class="form-section-title" style="border:none;padding:0;margin-bottom:12px">Tóm tắt lịch khám</div>
+                <div class="summary-row"><span class="lbl">Bác sĩ</span><span class="val" id="sumDoctor"></span></div>
+                <div class="summary-row"><span class="lbl">Chuyên khoa</span><span class="val" id="sumSpec"></span></div>
+                <div class="summary-row"><span class="lbl">Ngày khám</span><span class="val" id="sumDate"></span></div>
+                <div class="summary-row"><span class="lbl">Ca khám</span><span class="val" id="sumTime"></span></div>
+                <div class="summary-row"><span class="lbl">Phí khám</span><span class="val" style="color:#e0292a">100.000 VNĐ</span></div>
+            </div>
+
+            <!-- Bước 3b: Phương thức thanh toán -->
+            <div class="form-section" id="paySection" style="display:none">
+                <div class="form-section-title">Phương thức thanh toán</div>
+                <div class="pay-method-row">
+                    <div class="pay-card" id="payCash" onclick="selectPayMethod('cash')">
+                        <span class="pay-icon">💵</span>
+                        <div class="pay-title">Thanh toán tại quầy</div>
+                        <div class="pay-desc">Đặt lịch trước, đến nơi thanh toán</div>
+                    </div>
+                    <div class="pay-card" id="payVnpay" onclick="selectPayMethod('vnpay')">
+                        <span class="pay-icon">💳</span>
+                        <div class="pay-title">Thanh toán VNPay</div>
+                        <div class="pay-desc">Thanh toán online ngay khi đặt</div>
+                    </div>
+                </div>
+                <input type="hidden" name="paymentMethod" id="hPaymentMethod" value="" />
+                    <button type="button"
+                            id="btnConfirm"
+                            disabled
+                            onclick="location.href='@Url.Action("Index", "Patient")'"
+                            class="btn-confirm">
+                        Xác nhận đặt lịch
+                    </button>
+            </div>
+        </form>
+    }
+</div>
+</div>
+
+<!-- Modal tạo hồ sơ mới -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+        <div class="modal-title">Thêm hồ sơ khám bệnh</div>
+        <div class="msg-err" id="modalErr"></div>
+        <label class="form-label">Họ và tên *</label>
+        <input type="text" class="form-control" id="mName" placeholder="Nguyễn Văn A" />
+        <label class="form-label">Ngày sinh *</label>
+        <input type="date" class="form-control" id="mDob" />
+        <label class="form-label">Giới tính *</label>
+        <select class="form-control" id="mGender">
+            <option value="">-- Chọn --</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+            <option value="Khác">Khác</option>
+        </select>
+        <label class="form-label">Tiền sử bệnh (tuỳ chọn)</label>
+        <textarea class="form-textarea" id="mHistory" placeholder="Dị ứng, bệnh mãn tính..."></textarea>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal-cancel" onclick="closeModal()">Huỷ</button>
+            <button type="button" class="btn-modal-save" id="btnSave" onclick="savePatient()">Lưu hồ sơ</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PANEL: Đặt lịch chờ phân công
+     Hiện khi: người dùng bấm nút trên card bác sĩ hết lịch
+     ════════════════════════════════════════════════════════ -->
+<div id="pendingPanel" style="display:none;margin:20px auto;max-width:700px;padding:0 16px;">
+    <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:14px;padding:24px;">
+        <div style="font-size:14px;font-weight:600;color:#92400e;margin-bottom:6px;">
+            🗓️ Đặt lịch chờ phân công
+        </div>
+        <p style="font-size:13px;color:#78350f;margin-bottom:18px;line-height:1.6;">
+            Bác sĩ <strong id="pendingDoctorName"></strong> hiện chưa có lịch trống.
+            Bạn có thể để lại yêu cầu — lễ tân sẽ liên hệ và xếp lịch sớm nhất.
+        </p>
+
+        <label style="font-size:11px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">
+            Ngày mong muốn khám (tuỳ chọn)
+        </label>
+        <input type="date" id="pendingPreferredDate"
+               style="height:40px;border:1px solid #fcd34d;border-radius:9px;padding:0 12px;font-size:13px;color:#0d2d44;background:#fff;outline:none;font-family:'DM Sans',sans-serif;margin-bottom:14px;box-sizing:border-box;width:100%;max-width:220px;display:block;" />
+
+        <label style="font-size:11px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">
+            Hồ sơ bệnh nhân *
+        </label>
+        <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;">
+            <select id="pendingPatientId"
+                    style="flex:1;height:40px;border:1px solid #fcd34d;border-radius:9px;padding:0 12px;font-size:13px;color:#0d2d44;background:#fff;outline:none;font-family:'DM Sans',sans-serif;">
+                <option value="">-- Chọn hồ sơ --</option>
+                @foreach (var p in patients)
+                {
+                    <option value="@p.Id">@p.DisplayLabel</option>
+                }
+            </select>
+            <button type="button" onclick="openModal()"
+                    style="height:40px;padding:0 14px;background:#fff;border:1px solid #92400e;color:#92400e;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">
+                + Hồ sơ mới
+            </button>
+        </div>
+
+        <label style="font-size:11px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">
+            Ghi chú (tuỳ chọn)
+        </label>
+        <textarea id="pendingNote"
+                  style="width:100%;height:70px;border:1px solid #fcd34d;border-radius:9px;padding:10px 12px;font-size:13px;color:#0d2d44;background:#fff;outline:none;font-family:'DM Sans',sans-serif;resize:none;box-sizing:border-box;margin-bottom:16px;"
+                  placeholder="Mô tả triệu chứng, yêu cầu đặc biệt..."></textarea>
+
+        <div id="pendingErr" style="display:none;background:#fdecea;border:1px solid #f5c6c6;border-radius:8px;padding:10px 14px;margin-bottom:12px;color:#c0392b;font-size:12px;"></div>
+
+        <div style="display:flex;gap:10px;">
+            <button type="button" onclick="submitPendingBooking()"
+                    id="btnPendingSubmit"
+                    style="flex:2;height:44px;background:#92400e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;">
+                Gửi yêu cầu đặt lịch
+            </button>
+            <button type="button" onclick="closePendingPanel()"
+                    style="flex:1;height:44px;background:#f5f5f5;color:#555;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+                Huỷ
+            </button>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="_doctorData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model))</script>
+<script>
+    var doctorData = JSON.parse(document.getElementById('_doctorData').textContent || '[]');
+    var selectedDoctor = null;
+    var selectedSlot   = null;
+    var _aiRecommendedDoctorId = null;
+    var preselectedDoctorId = @Html.Raw(string.IsNullOrEmpty(preselectedDoctorId) ? "0" : preselectedDoctorId);
+    var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    // Keyword map dùng riêng cho filter chips (không còn dùng để navigate step)
+    var DOCTOR_FILTER_MAP = {
+        tai:  ['thính', 'ốc tai', 'tai giữa', 'thính học', 'nghe', 'điếc', 'cấy ốc'],
+        mui:  ['xoang', 'nội soi xoang', 'polyp', 'mũi', 'viêm mũi'],
+        hong: ['họng', 'amidan', 'thanh quản', 'khàn tiếng', 'nuốt'],
+        all:  []
+    };
+
+    function normalizeStr(s) {
+        return (s || '').toLowerCase()
+            .replace(/à|á|ả|ã|ạ|ă|ắ|ặ|ằ|ẳ|ẵ|â|ấ|ầ|ẩ|ẫ|ậ/g, 'a')
+            .replace(/è|é|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ/g, 'e')
+            .replace(/ì|í|ỉ|ĩ|ị/g, 'i')
+            .replace(/ò|ó|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ/g, 'o')
+            .replace(/ù|ú|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự/g, 'u')
+            .replace(/ỳ|ý|ỷ|ỹ|ỵ/g, 'y')
+            .replace(/đ/g, 'd');
+    }
+
+    // Danh sách bác sĩ đã từng khám (load async)
+    var _pastDoctors = [];
+
+    // ---------------------------------------------------------------
+    // FILTER CHIPS — lọc doctor grid theo chuyên khoa (client-side)
+    // ---------------------------------------------------------------
+    function filterDoctorGrid(type, chipEl) {
+        document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
+        if (chipEl) chipEl.classList.add('active');
+
+        var keywords = DOCTOR_FILTER_MAP[type] || [];
+        var filtered = !keywords.length
+            ? doctorData
+            : doctorData.filter(function(doc) {
+                var combined = normalizeStr(doc.Specialty || '') + ' ' + normalizeStr(doc.Description || '');
+                return keywords.some(function(kw){ return combined.includes(normalizeStr(kw)); });
+            });
+        if (!filtered.length) filtered = doctorData;
+
+        renderDoctorGrid(filtered);
+    }
+
+    // ---------------------------------------------------------------
+    // RENDER DOCTOR GRID — tái sử dụng ở nhiều nơi
+    // ---------------------------------------------------------------
+    function renderDoctorGrid(doctors) {
+        var grid = document.getElementById('doctorGrid');
+        grid.innerHTML = '';
+        doctors.forEach(function(doc) {
+            grid.appendChild(buildDoctorCard(doc, false));
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // BUILD DOCTOR CARD — dùng chung cho main grid và past grid
+    // extraClass: 'ai-recommended' | 'past-doctor' | ''
+    // ---------------------------------------------------------------
+    function buildDoctorCard(doc, isPast) {
+        var id       = doc.DoctorId || doc.doctorId;
+        var name     = doc.FullName  || doc.fullName  || '';
+        var spec     = doc.Specialty || doc.specialty || '';
+        var allSlots = doc.AvailableSlots || doc.availableSlots || [];
+        // Đếm đúng: chỉ slot có RemainingSlots > 0 mới là còn trống
+        var slotCount = allSlots.filter(function(s) {
+            return (s.RemainingSlots || s.remainingSlots || 0) > 0;
+        }).length;
+        var hasSlots = slotCount > 0;
+
+        var rating      = doc.AverageRating || doc.averageRating || 0;
+        var reviewCount = doc.ReviewCount   || doc.reviewCount   || 0;
+
+        var parts    = name.split(' ');
+        var initials = parts.slice(-2).map(function(w){ return w[0] || ''; }).join('');
+        var isAI     = _aiRecommendedDoctorId && id === _aiRecommendedDoctorId;
+
+        var card = document.createElement('div');
+
+        if (hasSlots) {
+            // Bác sĩ còn lịch — có thể chọn
+            card.className = 'doc-card' + (isAI ? ' ai-recommended' : (isPast ? ' past-doctor' : ''));
+            card.setAttribute('data-docid', id);
+            card.onclick = (function(d, n, s, c){ return function(){ selectDoctor(d, n, s, c); }; })(id, name, spec, card);
+
+            var ratingHtml = reviewCount > 0
+                ? '<div class="doc-rating">⭐ ' + rating.toFixed(1) + ' <span style="color:#94a3b8;font-size:11px;">(' + reviewCount + ' đánh giá)</span></div>'
+                : '<div class="doc-rating doc-rating-none">Chưa có đánh giá</div>';
+
+            card.innerHTML =
+                '<div class="doc-avatar">' + initials + '</div>' +
+                '<div class="doc-name">'   + name     + '</div>' +
+                '<div class="doc-spec">'   + spec     + '</div>' +
+                '<div class="doc-slots">'  + slotCount + ' ca trống (30 ngày tới)</div>' +
+                ratingHtml;
+        } else {
+            // Bác sĩ hết lịch — không cho click chọn, hiện nút đặt chờ
+            card.className = 'doc-card doc-card--unavailable';
+            card.setAttribute('data-docid', id);
+            // Không gán onclick — card không thể chọn
+
+            var ratingHtml2 = reviewCount > 0
+                ? '<div class="doc-rating">⭐ ' + rating.toFixed(1) + ' <span style="color:#94a3b8;font-size:11px;">(' + reviewCount + ' đánh giá)</span></div>'
+                : '<div class="doc-rating doc-rating-none">Chưa có đánh giá</div>';
+
+            card.innerHTML =
+                '<div class="doc-avatar">' + initials + '</div>' +
+                '<div class="doc-name">'   + name     + '</div>' +
+                '<div class="doc-spec">'   + spec     + '</div>' +
+                '<div class="doc-slots doc-slots--full">Hết lịch trống</div>' +
+                ratingHtml2 +
+                '<button type="button" class="btn-pending-booking" ' +
+                    'onclick="event.stopPropagation(); openPendingPanel(' + id + ', \'' + name.replace(/'/g, "\\'") + '\')">' +
+                    '📋 Đặt lịch chờ xếp' +
+                '</button>';
+        }
+
+        return card;
+    }
+
+    // ---------------------------------------------------------------
+    // LOAD PAST DOCTORS — gọi endpoint, lưu vào _pastDoctors
+    // ---------------------------------------------------------------
+    function loadPastDoctors() {
+        fetch('/Booking/GetPastDoctorsJson')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data || !data.length) return;
+                // Match tên từ appointment history với doctorData để lấy đủ thông tin
+                var matched = [];
+                data.forEach(function(pd) {
+                    var doc = doctorData.find(function(d) {
+                        return (d.FullName || d.fullName || '').trim() === (pd.doctorName || '').trim();
+                    });
+                    if (doc && !matched.find(function(m){ return (m.DoctorId||m.doctorId) === (doc.DoctorId||doc.doctorId); })) {
+                        matched.push(doc);
+                    }
+                });
+                _pastDoctors = matched;
+            })
+            .catch(function() { _pastDoctors = []; });
+    }
+
+    // ---------------------------------------------------------------
+    // SHOW DOCTOR SECTION — hiện khu vực tự chọn bác sĩ
+    // Gọi khi: "Bỏ qua tự chọn" hoặc preselectedDoctorId
+    // ---------------------------------------------------------------
+    function showDoctorSection() {
+        document.getElementById('doctorSection').style.display = 'block';
+
+        // Hiện bác sĩ đã từng khám nếu có
+        if (_pastDoctors.length) {
+            var pastGrid = document.getElementById('pastDoctorGrid');
+            pastGrid.innerHTML = '';
+            _pastDoctors.forEach(function(doc) {
+                pastGrid.appendChild(buildDoctorCard(doc, true));
+            });
+            document.getElementById('pastDoctorSection').style.display = 'block';
+        }
+
+        // Render toàn bộ bác sĩ (không filter chip nào active)
+        renderDoctorGrid(doctorData);
+
+        document.getElementById('doctorSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ---------------------------------------------------------------
+    // DOMContentLoaded
+    // ---------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', function() {
+        // Không render grid ngay — chờ người dùng nhập triệu chứng hoặc bấm "Bỏ qua"
+        loadPastDoctors();
+
+        // Nếu URL có ?doctorId=X → bỏ qua AI, hiện ngay phần tự chọn và auto-select
+        if (preselectedDoctorId > 0) {
+            showDoctorSection();
+            setTimeout(function() {
+                var doc = doctorData.find(function(d){
+                    return (d.DoctorId || d.doctorId) === preselectedDoctorId;
+                });
+                if (doc) {
+                    var card = document.querySelector('#doctorGrid [data-docid="' + preselectedDoctorId + '"]');
+                    if (card) selectDoctor(preselectedDoctorId, doc.FullName || doc.fullName, doc.Specialty || doc.specialty, card);
+                }
+            }, 150);
+        }
+
+        // Enter trong AI textarea → kích hoạt tìm kiếm
+        var ta = document.getElementById('aiSymptoms');
+        if (ta) {
+            ta.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); getAiRecommendation(); }
+            });
+        }
+    });
+
+    // ---------------------------------------------------------------
+    // SELECT DOCTOR — bước 1 hoàn thành, chuyển sang bước 2
+    // ---------------------------------------------------------------
+    function selectDoctor(docId, name, spec, el) {
+        document.querySelectorAll('.doc-card').forEach(function(c){ c.classList.remove('selected'); });
+        el.classList.add('selected');
+        selectedDoctor = doctorData.find(function(d){ return (d.DoctorId || d.doctorId) === docId; });
+        document.getElementById('selDoctorName').textContent = name;
+
+        // Hiện sec2 (chọn ngày/giờ), cập nhật step bar
+        document.getElementById('sec2').style.display = 'block';
+        document.getElementById('step1-bar').classList.remove('active');
+        document.getElementById('step1-bar').classList.add('done');
+        document.getElementById('step2-bar').classList.add('active');
+        selectedSlot = null;
+        document.getElementById('hScheduleId').value = '';
+        document.getElementById('sec3').style.display = 'none';
+        document.getElementById('summaryBox').style.display = 'none';
+        document.getElementById('paySection').style.display = 'none';
+        document.getElementById('hPaymentMethod').value = '';
+        document.getElementById('payCash').classList.remove('selected');
+        document.getElementById('payVnpay').classList.remove('selected');
+        document.getElementById('step3-bar').classList.remove('active');
+        document.getElementById('step3-bar').classList.remove('done');
+
+        // Set min date = hôm nay
+        var today = new Date();
+        var yyyy = today.getFullYear();
+        var mm   = String(today.getMonth()+1).padStart(2,'0');
+        var dd   = String(today.getDate()).padStart(2,'0');
+        var todayStr = yyyy+'-'+mm+'-'+dd;
+        var picker = document.getElementById('datePicker');
+        picker.min = todayStr;
+        // Giữ ngày đã chọn nếu hợp lệ, không thì reset
+        if (!picker.value || picker.value < todayStr) {
+            picker.value = '';
+            document.getElementById('slotGrid').innerHTML =
+                '<p style="color:#7a9bb0;font-size:13px;grid-column:1/-1;">Chọn ngày để xem ca khám</p>';
+            document.getElementById('dateHint').style.display = 'block';
+        } else {
+            onDateChange();
+        }
+        checkReady();
+        document.getElementById('sec2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function onDateChange() {
+        var picker = document.getElementById('datePicker');
+        var dateVal = picker.value;
+        if (!dateVal || !selectedDoctor) return;
+
+        document.getElementById('dateHint').style.display = 'none';
+        document.getElementById('dateLoadingSpinner').style.display = 'flex';
+        document.getElementById('slotGrid').innerHTML = '';
+
+        // Reset slot đang chọn
+        selectedSlot = null;
+        document.getElementById('hScheduleId').value = '';
+        document.getElementById('sec3').style.display = 'none';
+        document.getElementById('summaryBox').style.display = 'none';
+        document.getElementById('paySection').style.display = 'none';
+        document.getElementById('hPaymentMethod').value = '';
+        document.getElementById('payCash').classList.remove('selected');
+        document.getElementById('payVnpay').classList.remove('selected');
+        document.getElementById('step3-bar').classList.remove('active');
+        checkReady();
+
+        fetch('/Booking/GetSlotsByDate?doctorId=' + selectedDoctor.DoctorId + '&date=' + dateVal)
+            .then(r => r.json())
+            .then(function(data) {
+                document.getElementById('dateLoadingSpinner').style.display = 'none';
+                if (!data.success) {
+                    document.getElementById('slotGrid').innerHTML =
+                        '<p style="color:#c0392b;font-size:13px;grid-column:1/-1;">Có lỗi khi tải ca khám.</p>';
+                    return;
+                }
+                renderSlotsFromApi(data.slots, selectedDoctor.FullName, selectedDoctor.Specialty, dateVal);
+            })
+            .catch(function() {
+                document.getElementById('dateLoadingSpinner').style.display = 'none';
+                document.getElementById('slotGrid').innerHTML =
+                    '<p style="color:#c0392b;font-size:13px;grid-column:1/-1;">Không kết nối được máy chủ.</p>';
+            });
+    }
+
+    function renderSlotsFromApi(slots, docName, spec, dateVal) {
+        var grid = document.getElementById('slotGrid');
+        grid.innerHTML = '';
+
+        if (!slots || !slots.length) {
+            var d = new Date(dateVal + 'T00:00:00');
+            var dateDisplay = d.toLocaleDateString('vi-VN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+            grid.innerHTML = '<p style="color:#7a9bb0;font-size:13px;grid-column:1/-1;">Không có ca khám trống vào ' + dateDisplay + '. Vui lòng chọn ngày khác.</p>';
+            return;
+        }
+
+        // Map từng ca cố định → WorkSchedule phù hợp (overlap)
+        // Mỗi ca lấy remaining từ chính schedule của ca đó, không cộng dồn
+        FIXED_CA.forEach(function(ca) {
+            // Tìm schedule nào bao phủ ca này
+            var match = slots.find(function(s) {
+                var ss = toMin(s.startTime || s.StartTime);
+                var se = toMin(s.endTime   || s.EndTime);
+                return ca.start >= ss && ca.end <= se;
+            });
+            if (!match) return; // Ca này không nằm trong lịch làm việc → bỏ qua
+
+            var rem     = match.remainingSlots  || match.RemainingSlots  || 0;
+            var maxPat  = match.maxPatients      || match.MaxPatients      || 5;
+            var curPat  = match.currentPatients  || match.CurrentPatients  || (maxPat - rem);
+            var slotObj = {
+                ScheduleId:  match.scheduleId  || match.ScheduleId,
+                WorkDate:    match.workDate    || match.WorkDate,
+                startLabel:  toTime(ca.start),
+                endLabel:    toTime(ca.end),
+                remaining:   rem,
+                maxPatients: maxPat,
+                currentPatients: curPat
+            };
+
+            var expired = isSlotExpired(dateVal, slotObj.startLabel);
+            var isFull  = rem === 0;
+
+            var btn = document.createElement('div');
+            btn.className = 'slot-btn' + (expired ? ' expired' : (isFull ? ' full' : ''));
+            btn.dataset.date  = dateVal;
+            btn.dataset.start = slotObj.startLabel;
+
+            var badgeHtml;
+            if (expired) {
+                badgeHtml = '<div class="slot-expired-badge">⏰ Quá hạn</div>';
+            } else if (isFull) {
+                badgeHtml = '<div class="slot-available" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;"><span class="slot-dot" style="background:#dc2626;animation:none;"></span>Đã đầy</div>';
+            } else {
+                badgeHtml = '<div class="slot-available"><span class="slot-dot"></span>' + curPat + ' / ' + maxPat + ' đã đặt — còn ' + rem + ' chỗ</div>';
+            }
+
+            btn.innerHTML =
+                '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">' + slotObj.startLabel + ' – ' + slotObj.endLabel + '</div>' +
+                badgeHtml;
+
+            if (!expired && !isFull) {
+                (function(so) { btn.onclick = function() { selectSlot(so, docName, spec, btn); }; })(slotObj);
+            } else {
+                btn.title = expired ? 'Ca này đã qua giờ' : 'Ca này đã đầy';
+                if (isFull && !expired) { btn.style.opacity = '0.45'; btn.style.animation = 'none'; }
+            }
+            grid.appendChild(btn);
+        });
+
+        if (!grid.children.length) {
+            var d = new Date(dateVal + 'T00:00:00');
+            var dateDisplay = d.toLocaleDateString('vi-VN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+            grid.innerHTML = '<p style="color:#7a9bb0;font-size:13px;grid-column:1/-1;">Không có ca khám trống vào ' + dateDisplay + '.</p>';
+        }
+    }
+
+    // Ca cố định: 07-09, 09-11, 13-15, 15-17
+    var FIXED_CA = [
+        { start: 7*60,  end: 9*60  },
+        { start: 9*60,  end: 11*60 },
+        { start: 13*60, end: 15*60 },
+        { start: 15*60, end: 17*60 }
+    ];
+
+    function splitToCa(s) {
+        var result     = [];
+        var schedStart = toMin(s.startTime || s.StartTime);
+        var schedEnd   = toMin(s.endTime   || s.EndTime);
+        var remaining  = s.remainingSlots || s.RemainingSlots || 1;
+        var maxPat     = s.maxPatients || 5;
+
+        // Lọc các ca cố định nằm trong khung giờ làm việc của bác sĩ
+        var matched = FIXED_CA.filter(function(ca) {
+            return ca.start >= schedStart && ca.end <= schedEnd;
+        });
+
+        // Nếu không khớp ca nào (lịch lẻ), fallback 1 ca bằng cả slot
+        if (!matched.length) {
+            matched = [{ start: schedStart, end: schedEnd }];
+        }
+
+        var perSlot = Math.max(1, Math.floor(remaining / matched.length));
+
+        matched.forEach(function(ca) {
+            result.push({
+                ScheduleId:  s.scheduleId  || s.ScheduleId,
+                WorkDate:    s.workDate    || s.WorkDate,
+                startLabel:  toTime(ca.start),
+                endLabel:    toTime(ca.end),
+                remaining:   perSlot,
+                maxPatients: maxPat
+            });
+        });
+
+        return result;
+    }
+
+    function toMin(t) { var p = (t || '00:00:00').split(':'); return +p[0] * 60 + +p[1]; }
+    function toTime(m) { var h = Math.floor(m/60), mn = m%60; return (h<10?'0':'')+h+':'+(mn<10?'0':'')+mn; }
+
+    // Kiểm tra ca giờ đã qua chưa (dateVal: "yyyy-MM-dd", startLabel: "HH:MM")
+    function isSlotExpired(dateVal, startLabel) {
+        var now  = new Date();
+        var slot = new Date(dateVal + 'T' + startLabel + ':00');
+        return slot <= now;
+    }
+
+    // Cập nhật real-time: mỗi 60 giây kiểm tra lại các ca trên grid
+    // Nếu ca vừa qua giờ → đổi style sang expired, xoá onclick
+    setInterval(function() {
+        document.querySelectorAll('.slot-btn:not(.expired):not(.full)').forEach(function(btn) {
+            var date  = btn.dataset.date;
+            var start = btn.dataset.start;
+            if (date && start && isSlotExpired(date, start)) {
+                btn.className = 'slot-btn expired';
+                btn.onclick   = null;
+                btn.title     = 'Ca này đã qua giờ';
+                // Thay badge
+                var badge = btn.querySelector('.slot-available');
+                if (badge) {
+                    badge.className = 'slot-expired-badge';
+                    badge.innerHTML = '⏰ Quá hạn';
+                    badge.removeAttribute('style');
+                }
+                // Nếu đang selected → bỏ chọn
+                if (btn.classList.contains('selected') || selectedSlot) {
+                    var selStart = selectedSlot && selectedSlot.startLabel;
+                    if (selStart === start) {
+                        btn.classList.remove('selected');
+                        selectedSlot = null;
+                        document.getElementById('sec3').style.display = 'none';
+                        document.getElementById('summaryBox').style.display = 'none';
+                        document.getElementById('paySection').style.display = 'none';
+                        document.getElementById('hPaymentMethod').value = '';
+                        document.getElementById('payCash').classList.remove('selected');
+                        document.getElementById('payVnpay').classList.remove('selected');
+                    }
+                }
+            }
+        });
+    }, 60000);
+
+    function selectSlot(slot, docName, spec, el) {
+        document.querySelectorAll('.slot-btn').forEach(function(b){ b.classList.remove('selected'); });
+        el.classList.add('selected');
+        selectedSlot = slot;
+        document.getElementById('hScheduleId').value = slot.ScheduleId;
+
+        // Hiện sec3 (xác nhận), cập nhật step bar
+        document.getElementById('sec3').style.display = 'block';
+        document.getElementById('step2-bar').classList.remove('active');
+        document.getElementById('step2-bar').classList.add('done');
+        document.getElementById('step3-bar').classList.add('active');
+
+        // Cập nhật summary
+        var d = new Date(slot.WorkDate);
+        document.getElementById('sumDoctor').textContent = docName;
+        document.getElementById('sumSpec').textContent   = spec;
+        document.getElementById('sumDate').textContent   = d.toLocaleDateString('vi-VN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        document.getElementById('sumTime').textContent   = slot.startLabel + ' – ' + slot.endLabel;
+        document.getElementById('summaryBox').style.display = 'block';
+        document.getElementById('paySection').style.display = 'block';
+        checkReady();
+    }
+
+    function checkReady() {
+        var payMethod = document.getElementById('hPaymentMethod').value;
+        var ready = !!(selectedDoctor && selectedSlot && payMethod);
+        document.getElementById('btnConfirm').disabled = !ready;
+    }
+
+    function selectPayMethod(method) {
+        document.getElementById('hPaymentMethod').value = method;
+        document.getElementById('payCash').classList.toggle('selected', method === 'cash');
+        document.getElementById('payVnpay').classList.toggle('selected', method === 'vnpay');
+        checkReady();
+    }
+
+    function validateForm() {
+        if (!document.getElementById('hPatientId').value)  { alert('Vui lòng chọn hồ sơ bệnh nhân'); return false; }
+        if (!document.getElementById('hScheduleId').value) { alert('Vui lòng chọn ca khám');          return false; }
+        return true;
+    }
+
+    function confirmBooking() {
+        if (!validateForm()) return;
+        var method = document.getElementById('hPaymentMethod').value;
+        var btn    = document.getElementById('btnConfirm');
+
+        if (method === 'vnpay') {
+            var patientId  = parseInt(document.getElementById('hPatientId').value);
+            var scheduleId = parseInt(document.getElementById('hScheduleId').value);
+            var note       = document.querySelector('textarea[name="note"]')?.value || '';
+            btn.disabled    = true;
+            btn.textContent = 'Đang xử lý...';
+            fetch('/Booking/BookAndPay', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
+                body:    JSON.stringify({ patientId: patientId, scheduleId: scheduleId, note: note })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    alert('❌ ' + (data.message || 'Có lỗi xảy ra.'));
+                    btn.disabled    = false;
+                    btn.textContent = 'Xác nhận đặt lịch';
+                    return;
+                }
+                window.location.href = data.paymentUrl;
+            })
+            .catch(function() {
+                alert('❌ Không kết nối được máy chủ. Vui lòng thử lại.');
+                btn.disabled    = false;
+                btn.textContent = 'Xác nhận đặt lịch';
+            });
+        } else {
+            document.getElementById('bookForm').action = '/Booking/Book';
+            document.getElementById('bookForm').submit();
+        }
+    }
+
+    // Modal
+    function openModal() {
+        ['mName','mDob','mGender','mHistory'].forEach(function(id){ document.getElementById(id).value=''; });
+        document.getElementById('modalErr').style.display = 'none';
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+    function savePatient() {
+        var name    = document.getElementById('mName').value.trim();
+        var dob     = document.getElementById('mDob').value;
+        var gender  = document.getElementById('mGender').value;
+        var history = document.getElementById('mHistory').value.trim();
+        var errEl   = document.getElementById('modalErr');
+        if (!name)   { errEl.textContent='Vui lòng nhập họ tên.';    errEl.style.display='block'; return; }
+        if (!dob)    { errEl.textContent='Vui lòng chọn ngày sinh.'; errEl.style.display='block'; return; }
+        if (!gender) { errEl.textContent='Vui lòng chọn giới tính.'; errEl.style.display='block'; return; }
+        errEl.style.display = 'none';
+        var btn = document.getElementById('btnSave');
+        btn.disabled=true; btn.textContent='Đang lưu...';
+        fetch('/Booking/CreatePatient', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
+            body: JSON.stringify({ fullName:name, dateOfBirth:dob, gender:gender, medicalHistory:history||null })
+        })
+        .then(r => r.json())
+        .then(function(data) {
+            if (data.success && data.patient) {
+                var p = data.patient;
+                var age = Math.floor((new Date()-new Date(p.dateOfBirth))/(365.25*24*3600*1000));
+                var sel = document.getElementById('selPatient');
+                var opt = new Option(p.fullName+' ('+p.gender+', '+age+' tuổi) — '+p.recordCode, p.id);
+                sel.appendChild(opt); sel.value=p.id;
+                document.getElementById('hPatientId').value=p.id;
+                closeModal();
+            } else { errEl.textContent=data.message||'Có lỗi xảy ra.'; errEl.style.display='block'; }
+        })
+        .catch(function(){ errEl.textContent='Không kết nối được máy chủ.'; errEl.style.display='block'; })
+        .finally(function(){ btn.disabled=false; btn.textContent='Lưu hồ sơ'; });
+    }
+
+    // ===================================================================
+    // AI RECOMMENDATION — Gợi ý bác sĩ theo triệu chứng
+    // ===================================================================
+
+    // Lưu kết quả AI để dùng khi bệnh nhân nhấn "Chọn bác sĩ này"
+    var _aiRecommendedDoctorId = null;
+
+    function getAiRecommendation() {
+        var symptoms = document.getElementById('aiSymptoms').value.trim();
+        var errEl    = document.getElementById('aiRecError');
+        var resultEl = document.getElementById('aiRecResult');
+
+        errEl.style.display    = 'none';
+        resultEl.style.display = 'none';
+        _aiRecommendedDoctorId = null;
+
+        if (!symptoms) {
+            errEl.textContent    = '⚠️ Vui lòng mô tả triệu chứng trước khi tìm kiếm.';
+            errEl.style.display  = 'block';
+            document.getElementById('aiSymptoms').focus();
+            return;
+        }
+        if (symptoms.length < 5) {
+            errEl.textContent    = '⚠️ Mô tả quá ngắn. Vui lòng nhập ít nhất 5 ký tự.';
+            errEl.style.display  = 'block';
+            return;
+        }
+
+        // Đặt loading state cho button
+        var btn     = document.getElementById('aiRecBtn');
+        var btnIcon = document.getElementById('aiRecBtnIcon');
+        var btnText = document.getElementById('aiRecBtnText');
+        btn.disabled     = true;
+        btnIcon.innerHTML = '<span class="ai-spin"></span>';
+        btnText.textContent = 'Đang phân tích...';
+
+        fetch('/api/recommendation-proxy/doctor', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ symptoms: symptoms })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                errEl.textContent   = '❌ ' + (data.message || 'Không thể gợi ý bác sĩ. Vui lòng thử lại.');
+                errEl.style.display = 'block';
+                return;
+            }
+
+            // Lưu doctorId để dùng khi "Chọn bác sĩ này"
+            _aiRecommendedDoctorId = data.recommendedDoctorId;
+
+            // Render kết quả
+            var name     = data.doctorName || '';
+            var spec     = data.specialty  || '';
+            var degree   = data.degree     || '';
+            var reason   = data.reason     || '';
+
+            var parts    = name.split(' ');
+            var initials = parts.slice(-2).map(function(w){ return w[0] || ''; }).join('');
+
+            document.getElementById('aiDocAvatar').textContent = initials;
+            document.getElementById('aiDocName').textContent   = name;
+            document.getElementById('aiDocSpec').textContent   = spec;
+            document.getElementById('aiDocReason').textContent = reason;
+
+            resultEl.style.display = 'block';
+            resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            // Grid vẫn ẩn — người dùng chọn "Chọn bác sĩ này" hoặc "Bỏ qua, tự chọn"
+        })
+        .catch(function() {
+            errEl.textContent   = '❌ Không kết nối được máy chủ. Vui lòng thử lại sau.';
+            errEl.style.display = 'block';
+        })
+        .finally(function() {
+            btn.disabled        = false;
+            btnIcon.textContent = '🔍';
+            btnText.textContent = 'Tìm bác sĩ';
+        });
+    }
+
+    // Áp dụng gợi ý AI: tìm bác sĩ theo id → selectDoctor ngay, không cần mở grid
+    function applyAiRecommendation() {
+        if (!_aiRecommendedDoctorId) return;
+
+        var doc = doctorData.find(function(d){ return (d.DoctorId || d.doctorId) === _aiRecommendedDoctorId; });
+        if (!doc) {
+            document.getElementById('aiRecError').textContent   = '⚠️ Bác sĩ được gợi ý hiện không có lịch trống. Vui lòng tự chọn bác sĩ.';
+            document.getElementById('aiRecError').style.display = 'block';
+            return;
+        }
+
+        // Đảm bảo doctorSection hiện để selectDoctor có card để highlight
+        showDoctorSection();
+        setTimeout(function() {
+            var card = document.querySelector('#doctorGrid [data-docid="' + _aiRecommendedDoctorId + '"]');
+            if (!card) card = document.querySelector('#pastDoctorGrid [data-docid="' + _aiRecommendedDoctorId + '"]');
+            if (card) {
+                selectDoctor(_aiRecommendedDoctorId, doc.FullName || doc.fullName, doc.Specialty || doc.specialty, card);
+                setTimeout(function(){
+                    document.getElementById('sec2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 200);
+            }
+        }, 100);
+    }
+
+    // Bỏ qua gợi ý AI → hiện khu vực tự chọn bác sĩ bên dưới
+    // GIỮ _aiRecommendedDoctorId để badge "✦ AI Gợi ý" vẫn hiện trên card trong grid
+    function dismissAiResult() {
+        document.getElementById('aiRecResult').style.display = 'none';
+        showDoctorSection();
+    }
+
+</script>
+
+<script>
+    // ================================================================
+    // PENDING BOOKING (Chờ Phân Công)
+    // ================================================================
+    var _pendingDoctorId = null;
+
+    function openPendingPanel(docId, docName) {
+        _pendingDoctorId = docId;
+        document.getElementById('pendingDoctorName').textContent = docName;
+        document.getElementById('pendingPreferredDate').value = '';
+        document.getElementById('pendingNote').value = '';
+        document.getElementById('pendingPatientId').value = '';
+        document.getElementById('pendingErr').style.display = 'none';
+
+        var today = new Date();
+        var yyyy = today.getFullYear();
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('pendingPreferredDate').min = yyyy + '-' + mm + '-' + dd;
+
+        var panel = document.getElementById('pendingPanel');
+        panel.style.display = 'block';
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closePendingPanel() {
+        document.getElementById('pendingPanel').style.display = 'none';
+        _pendingDoctorId = null;
+    }
+
+    function submitPendingBooking() {
+        var patientId = document.getElementById('pendingPatientId').value;
+        var preferredDate = document.getElementById('pendingPreferredDate').value || null;
+        var note = (document.getElementById('pendingNote').value || '').trim() || null;
+        var errEl = document.getElementById('pendingErr');
+        var btn = document.getElementById('btnPendingSubmit');
+
+        errEl.style.display = 'none';
+
+        if (!patientId) {
+            errEl.textContent = '\u26a0\ufe0f Vui lòng chọn hồ sơ bệnh nhân.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Đang gửi...';
+
+        var csrfToken = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+
+        var payload = {
+            patientId: parseInt(patientId),
+            doctorId: _pendingDoctorId || null,
+            scheduleId: null,
+            preferredDate: preferredDate,
+            note: note,
+            paymentMethod: 'cash'
+        };
+
+        fetch('/Booking/BookPending', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': csrfToken
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                errEl.textContent = '\u274c ' + (data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                errEl.style.display = 'block';
+                return;
+            }
+            var code = data.data && data.data.bookingCode ? data.data.bookingCode : '';
+            window.location.href = '/Patient/Index?pending=' + encodeURIComponent(code);
+        })
+        .catch(function() {
+            errEl.textContent = '\u274c Không kết nối được máy chủ. Vui lòng thử lại.';
+            errEl.style.display = 'block';
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = 'Gửi yêu cầu đặt lịch';
+        });
+    }
+</script>
+

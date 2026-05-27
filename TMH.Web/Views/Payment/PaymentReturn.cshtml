@@ -1,0 +1,598 @@
+
+@model TMH.Shared.DTOs.VnPaymentResponseDto
+
+@{
+    ViewData["Title"] = "Kết quả thanh toán";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+
+<style>
+
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'Be Vietnam Pro', sans-serif;
+        background: #f0f4f8;
+        min-height: 100vh;
+    }
+
+    .pr-scene {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Background mesh */
+        .pr-scene::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(ellipse 60% 50% at 10% 20%, rgba(40,167,69,0.08) 0%, transparent 60%), radial-gradient(ellipse 50% 60% at 90% 80%, rgba(40,167,69,0.06) 0%, transparent 60%), linear-gradient(160deg, #eaf6ee 0%, #f0f4f8 40%, #e8f0fe 100%);
+        }
+
+        .pr-scene.fail::before {
+            background: radial-gradient(ellipse 60% 50% at 10% 20%, rgba(220,53,69,0.08) 0%, transparent 60%), radial-gradient(ellipse 50% 60% at 90% 80%, rgba(220,53,69,0.06) 0%, transparent 60%), linear-gradient(160deg, #fdf0f0 0%, #f8f0f4 40%, #f4e8e8 100%);
+        }
+
+    /* Floating blobs */
+    .blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0.18;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .blob-1 {
+        width: 300px;
+        height: 300px;
+        top: -80px;
+        left: -80px;
+        background: #28a745;
+        animation: blobFloat 8s ease-in-out infinite;
+    }
+
+    .blob-2 {
+        width: 200px;
+        height: 200px;
+        bottom: 40px;
+        right: -60px;
+        background: #5cd65c;
+        animation: blobFloat 10s ease-in-out infinite reverse;
+    }
+
+    .pr-scene.fail .blob-1 {
+        background: #dc3545;
+    }
+
+    .pr-scene.fail .blob-2 {
+        background: #ff6b6b;
+    }
+
+    @@keyframes blobFloat {
+        0%, 100% {
+            transform: translateY(0) scale(1);
+        }
+
+        50% {
+            transform: translateY(-20px) scale(1.05);
+        }
+    }
+
+    /* Card */
+    .pr-card {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 480px;
+        background: rgba(255,255,255,0.82);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 28px;
+        border: 1px solid rgba(255,255,255,0.9);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.10), 0 0 0 1px rgba(255,255,255,0.5) inset;
+        overflow: hidden;
+        animation: slideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px) scale(0.96);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Top stripe */
+    .pr-stripe {
+        height: 6px;
+        background: linear-gradient(90deg, #28a745, #5cd65c, #a8e6a3);
+        background-size: 200% 100%;
+        animation: stripeSlide 3s linear infinite;
+    }
+
+    .pr-scene.fail .pr-stripe {
+        background: linear-gradient(90deg, #dc3545, #ff6b6b, #ffb3b3);
+        background-size: 200% 100%;
+    }
+
+    @@keyframes stripeSlide {
+        0% {
+            background-position: 0% 0%;
+        }
+
+        100% {
+            background-position: 200% 0%;
+        }
+    }
+
+    /* Header section */
+    .pr-header {
+        padding: 2.5rem 2rem 1.5rem;
+        text-align: center;
+    }
+
+    .pr-icon-ring {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        margin: 0 auto 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+        .pr-icon-ring.success {
+            background: linear-gradient(135deg, #28a745, #5cd65c);
+            box-shadow: 0 8px 30px rgba(40,167,69,0.35);
+        }
+
+        .pr-icon-ring.fail {
+            background: linear-gradient(135deg, #dc3545, #ff6b6b);
+            box-shadow: 0 8px 30px rgba(220,53,69,0.35);
+        }
+
+        .pr-icon-ring::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0.2;
+            animation: ringPulse 2.5s ease-out infinite;
+        }
+
+        .pr-icon-ring.success {
+            color: #28a745;
+        }
+
+        .pr-icon-ring.fail {
+            color: #dc3545;
+        }
+
+    @@keyframes ringPulse {
+        0% {
+            transform: scale(1);
+            opacity: 0.25;
+        }
+
+        70% {
+            transform: scale(1.15);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1.15);
+            opacity: 0;
+        }
+    }
+
+    .pr-icon-ring i {
+        font-size: 2.4rem;
+        color: white;
+    }
+
+    .pr-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a2332;
+        line-height: 1.2;
+    }
+
+    .pr-subtitle {
+        font-size: 0.875rem;
+        color: #6b7a8f;
+        margin-top: 0.4rem;
+        font-weight: 400;
+    }
+
+    /* Divider */
+    .pr-divider {
+        height: 1px;
+        margin: 0 2rem;
+        background: linear-gradient(90deg, transparent, #e2e8f0 30%, #e2e8f0 70%, transparent);
+    }
+
+    /* Details */
+    .pr-details {
+        padding: 1.5rem 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .pr-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.65rem 1rem;
+        background: rgba(241,245,249,0.7);
+        border-radius: 12px;
+        border: 1px solid rgba(226,232,240,0.6);
+        animation: rowFadeIn 0.5s ease both;
+    }
+
+        .pr-row:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .pr-row:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .pr-row:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+    @@keyframes rowFadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .pr-row-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #8898aa;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .pr-row-label i {
+            font-size: 0.85rem;
+            width: 14px;
+            text-align: center;
+        }
+
+    .pr-row-value {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #1a2332;
+        text-align: right;
+        max-width: 55%;
+        word-break: break-all;
+    }
+
+    /* Error badge */
+    .pr-error-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(220,53,69,0.08);
+        color: #dc3545;
+        border: 1px solid rgba(220,53,69,0.2);
+        border-radius: 8px;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    /* Footer */
+    .pr-footer {
+        padding: 0 2rem 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .pr-countdown {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .pr-countdown-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #475569;
+        transition: background 0.3s;
+    }
+
+    .pr-btn {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        border: none;
+        border-radius: 14px;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        transition: all 0.2s ease;
+        letter-spacing: 0.01em;
+    }
+
+        .pr-btn.success {
+            background: linear-gradient(135deg, #28a745, #34c759);
+            color: white;
+            box-shadow: 0 6px 20px rgba(40,167,69,0.3);
+        }
+
+        .pr-btn.fail {
+            background: linear-gradient(135deg, #dc3545, #ff4d5e);
+            color: white;
+            box-shadow: 0 6px 20px rgba(220,53,69,0.3);
+        }
+
+        .pr-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.06);
+        }
+
+        .pr-btn:active {
+            transform: translateY(0);
+            filter: brightness(0.97);
+        }
+
+    /* Toast */
+    .pr-toast {
+        position: fixed;
+        top: 1.25rem;
+        right: 1.25rem;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1.25rem;
+        border-radius: 14px;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: white;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        animation: toastIn 0.5s cubic-bezier(0.22,1,0.36,1) both, toastOut 0.4s ease 4s forwards;
+        backdrop-filter: blur(10px);
+    }
+
+        .pr-toast.success {
+            background: linear-gradient(135deg, rgba(40,167,69,0.92), rgba(92,214,92,0.92));
+        }
+
+        .pr-toast.fail {
+            background: linear-gradient(135deg, rgba(220,53,69,0.92), rgba(255,107,107,0.92));
+        }
+
+        .pr-toast i {
+            font-size: 1rem;
+        }
+
+    @@keyframes toastIn {
+        from {
+            opacity: 0;
+            transform: translateX(60px) scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+    }
+
+    @@keyframes toastOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        to {
+            opacity: 0;
+            transform: translateX(60px);
+        }
+    }
+
+    /* Progress bar for countdown */
+    .pr-progress-wrap {
+        width: 100%;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .pr-progress-bar {
+        height: 100%;
+        border-radius: 99px;
+        animation: progressDown 5s linear forwards;
+    }
+
+        .pr-progress-bar.success {
+            background: linear-gradient(90deg, #28a745, #5cd65c);
+        }
+
+        .pr-progress-bar.fail {
+            background: linear-gradient(90deg, #dc3545, #ff6b6b);
+        }
+
+    @@keyframes progressDown {
+        from {
+            width: 100%;
+        }
+
+        to {
+            width: 0%;
+        }
+    }
+</style>
+
+@if (Model.Success)
+{
+    <div class="pr-scene">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+
+        <div class="pr-card">
+            <div class="pr-stripe"></div>
+
+            <div class="pr-header">
+                <div class="pr-icon-ring success">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h1 class="pr-title">Thanh toán thành công</h1>
+                <p class="pr-subtitle">Giao dịch của bạn đã được xử lý</p>
+            </div>
+
+            <div class="pr-divider"></div>
+
+            <div class="pr-details">
+                <div class="pr-row">
+                    <span class="pr-row-label"><i class="fas fa-hashtag"></i>Mã giao dịch</span>
+                    <span class="pr-row-value">@Model.TransactionId</span>
+                </div>
+                <div class="pr-row">
+                    <span class="pr-row-label"><i class="fas fa-file-alt"></i>Nội dung</span>
+                    <span class="pr-row-value">@Model.OrderDescription</span>
+                </div>
+                <div class="pr-row">
+                    <span class="pr-row-label"><i class="fas fa-receipt"></i>Mã đơn hàng</span>
+                    <span class="pr-row-value">@Model.OrderId</span>
+                </div>
+            </div>
+
+            <div class="pr-footer">
+                <div class="pr-progress-wrap">
+                    <div class="pr-progress-bar success"></div>
+                </div>
+                <div class="pr-countdown">
+                    Tự động chuyển trang sau
+                    <span class="pr-countdown-badge" id="countdown">5</span>
+                    giây
+                </div>
+                <a href="/Patient/Index" class="pr-btn success">
+                    <i class="fas fa-calendar-check"></i> Xem lịch khám ngay
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="pr-toast success">
+        <i class="fas fa-check-circle"></i> Thanh toán thành công!
+    </div>
+}
+else
+{
+    <div class="pr-scene fail">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+
+        <div class="pr-card">
+            <div class="pr-stripe"></div>
+
+            <div class="pr-header">
+                <div class="pr-icon-ring fail">
+                    <i class="fas fa-times"></i>
+                </div>
+                <h1 class="pr-title">Thanh toán thất bại</h1>
+                <p class="pr-subtitle">Giao dịch không thể hoàn tất</p>
+            </div>
+
+            <div class="pr-divider"></div>
+
+            <div class="pr-details">
+                <div class="pr-row">
+                    <span class="pr-row-label"><i class="fas fa-info-circle"></i>Lý do</span>
+                    <span class="pr-row-value">@Model.Message</span>
+                </div>
+                <div class="pr-row">
+                    <span class="pr-row-label"><i class="fas fa-exclamation-triangle"></i>Mã lỗi</span>
+                    <span class="pr-row-value">
+                        <span class="pr-error-badge">
+                            <i class="fas fa-code"></i> @Model.VnPayResponseCode
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="pr-footer">
+                <div class="pr-progress-wrap">
+                    <div class="pr-progress-bar fail"></div>
+                </div>
+                <div class="pr-countdown">
+                    Tự động quay lại sau
+                    <span class="pr-countdown-badge" id="countdown">5</span>
+                    giây
+                </div>
+                <a href="/Patient/Index" class="pr-btn fail">
+                    <i class="fas fa-arrow-left"></i> Quay lại ngay
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="pr-toast fail">
+        <i class="fas fa-times-circle"></i> Thanh toán thất bại!
+    </div>
+}
+
+<script>
+    let time = 5;
+    const countdownEl = document.getElementById("countdown");
+
+    const interval = setInterval(() => {
+        time--;
+        if (countdownEl) countdownEl.textContent = time;
+        if (time <= 0) {
+            clearInterval(interval);
+            window.location.href = "/Patient/Index";
+        }
+    }, 1000);
+</script>

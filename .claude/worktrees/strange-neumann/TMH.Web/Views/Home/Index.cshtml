@@ -1,0 +1,1049 @@
+@{
+    ViewBag.Title = "Phòng Khám Tai Mũi Họng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        /* ===== HERO ===== */
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 480px;
+            background: linear-gradient(135deg,#f0f8ff 0%,#fff 60%);
+            padding: 60px 40px 50px;
+            gap: 40px;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .hero::before {
+                content: '';
+                position: absolute;
+                right: -100px;
+                top: -100px;
+                width: 400px;
+                height: 400px;
+                border-radius: 50%;
+                background: rgba(26,111,168,0.06);
+                pointer-events: none;
+            }
+
+            .hero::after {
+                content: '';
+                position: absolute;
+                right: 80px;
+                bottom: -60px;
+                width: 200px;
+                height: 200px;
+                border-radius: 50%;
+                background: rgba(201,162,39,0.08);
+                pointer-events: none;
+            }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fdf3d7;
+            border: 1px solid rgba(201,162,39,0.3);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #c9a227;
+            margin-bottom: 18px;
+        }
+
+            .hero-tag::before {
+                content: '✦';
+                font-size: 9px;
+            }
+
+        .hero-title {
+            font-family: 'Crimson Pro',serif;
+            font-size: 40px;
+            font-weight: 600;
+            color: #0a4d7c;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+
+            .hero-title em {
+                color: #c9a227;
+                font-style: normal;
+            }
+
+        .hero-desc {
+            font-size: 14px;
+            color: #3a5a72;
+            line-height: 1.7;
+            margin-bottom: 28px;
+            max-width: 420px;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            height: 44px;
+            padding: 0 24px;
+            background: #0a4d7c;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'DM Sans',sans-serif;
+            transition: background .15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+            .btn-hero-primary:hover {
+                background: #1a6fa8;
+            }
+
+        .btn-hero-secondary {
+            height: 44px;
+            padding: 0 24px;
+            background: #fdf3d7;
+            color: #c9a227;
+            border: 1px solid rgba(201,162,39,0.4);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'DM Sans',sans-serif;
+            transition: background .15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+            .btn-hero-secondary:hover {
+                background: #f5e9b8;
+            }
+
+        .hero-stats {
+            display: flex;
+            gap: 24px;
+            margin-top: 28px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-family: 'Crimson Pro',serif;
+            font-size: 26px;
+            font-weight: 600;
+            color: #0a4d7c;
+        }
+
+        .stat-lbl {
+            font-size: 11px;
+            color: #7a9bb0;
+            margin-top: 2px;
+        }
+
+        .stat-div {
+            width: 1px;
+            background: #d4e8f5;
+            align-self: stretch;
+        }
+
+        /* ===== APPOINTMENT CARD ===== */
+
+        /* ── Hero Carousel ─────────────────────────────── */
+        .hero-carousel-wrap {
+            width: 500px;
+            flex-shrink: 0;
+        }
+        .hero-carousel {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px;
+            box-shadow: 0 8px 40px rgba(10,77,124,.12);
+            min-height: 420px;
+        }
+        .carousel-slide { animation: fadeIn .4s ease; }
+        @@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        .slide-tag { font-size: 10px; font-weight: 600; color: #1a6fa8; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+        .slide-title { font-family: 'Crimson Pro', serif; font-size: 26px; font-weight: 600; color: #0a4d7c; line-height: 1.3; margin-bottom: 16px; }
+        .slide-cta { font-size: 13px; color: #1a6fa8; text-decoration: none; font-weight: 500; display: inline-block; margin-top: 12px; }
+        .slide-cta:hover { color: #0a4d7c; }
+
+        /* Bác sĩ */
+        .doctors-showcase { display: flex; flex-direction: column; gap: 10px; }
+        .doc-card-mini { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #f8fbff; border-radius: 10px; border: 1px solid #e8f0f7; }
+        .doc-avatar-mini { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg,#0a4d7c,#1a6fa8); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 600; flex-shrink: 0; }
+        .doc-info { flex: 1; }
+        .doc-name { font-size: 14px; font-weight: 500; color: #0a4d7c; }
+        .doc-spec { font-size: 12px; color: #7a9bb0; }
+        .loading-shimmer { height: 62px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 10px; }
+        @@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+        /* Khuyến mãi */
+        .promo-badge { display: inline-block; background: #fff3cd; color: #856404; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
+        .promo-title { font-family: 'Crimson Pro', serif; font-size: 34px; font-weight: 700; color: #0a4d7c; line-height: 1.2; margin-bottom: 10px; }
+        .promo-title span { color: #c9a227; }
+        .promo-desc { font-size: 12px; color: #7a9bb0; line-height: 1.6; margin-bottom: 14px; }
+        .promo-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+        .promo-item { font-size: 12px; color: #2a3f52; font-weight: 500; }
+        .slide-cta-btn { display: block; text-align: center; background: #0a4d7c; color: #fff; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 500; text-decoration: none; transition: background .15s; }
+        .slide-cta-btn:hover { background: #1a6fa8; }
+
+        /* Thống kê */
+        .stats-showcase { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .stat-big { background: #f0f8ff; border-radius: 10px; padding: 14px 12px; text-align: center; }
+        .stat-big-num { display: block; font-size: 28px; font-weight: 700; color: #0a4d7c; }
+        .stat-big-lbl { display: block; font-size: 11px; color: #7a9bb0; margin-top: 2px; }
+        .trust-badges { display: flex; flex-direction: column; gap: 6px; }
+        .trust-item { font-size: 12px; color: #2a3f52; font-weight: 500; }
+
+        /* Dots */
+        .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; border: none; background: #d4e8f5; cursor: pointer; padding: 0; transition: all .2s; }
+        .dot.active { background: #0a4d7c; width: 24px; border-radius: 4px; }
+
+        @@media (max-width: 900px) { .hero-carousel-wrap { width: 100%; } }
+        .hero-card {
+            background: #fff;
+            border: 1px solid #d4e8f5;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(10,77,124,0.08);
+        }
+
+        .card-head-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #0a4d7c;
+            margin-bottom: 4px;
+        }
+
+        .card-head-sub {
+            font-size: 12px;
+            color: #7a9bb0;
+            margin-bottom: 20px;
+        }
+
+        .appt-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .appt-form-full {
+            margin-bottom: 12px;
+        }
+
+        .appt-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #3a5a72;
+            margin-bottom: 5px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .appt-input {
+            width: 100%;
+            height: 38px;
+            border: 1px solid #d4e8f5;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 13px;
+            color: #0d2d44;
+            background: #fff;
+            outline: none;
+            font-family: 'DM Sans',sans-serif;
+            transition: border-color .15s;
+        }
+
+            .appt-input:focus {
+                border-color: #1a6fa8;
+                box-shadow: 0 0 0 3px rgba(26,111,168,0.1);
+            }
+
+        .appt-select {
+            width: 100%;
+            height: 38px;
+            border: 1px solid #d4e8f5;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 13px;
+            color: #0d2d44;
+            background: #fff;
+            outline: none;
+            font-family: 'DM Sans',sans-serif;
+        }
+
+        .btn-appt {
+            width: 100%;
+            height: 40px;
+            background: #0a4d7c;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'DM Sans',sans-serif;
+            margin-top: 4px;
+            transition: background .15s;
+        }
+
+            .btn-appt:hover {
+                background: #1a6fa8;
+            }
+
+        .appt-note {
+            text-align: center;
+            font-size: 11px;
+            color: #7a9bb0;
+            margin-top: 8px;
+        }
+
+            .appt-note span {
+                color: #c9a227;
+                font-weight: 500;
+            }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            padding: 52px 40px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: #e8f4fd;
+            color: #1a6fa8;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-family: 'Crimson Pro',serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: #0a4d7c;
+            margin-bottom: 6px;
+        }
+
+        .section-sub {
+            font-size: 13px;
+            color: #7a9bb0;
+            margin-bottom: 32px;
+        }
+
+        /* ===== SERVICES ===== */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            gap: 16px;
+        }
+
+        .svc-card {
+            background: #fff;
+            border: 1px solid #d4e8f5;
+            border-radius: 14px;
+            padding: 20px 18px;
+            cursor: pointer;
+            transition: border-color .2s,transform .15s;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .svc-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: #0a4d7c;
+                opacity: 0;
+                transition: opacity .2s;
+            }
+
+            .svc-card:hover {
+                border-color: #1a6fa8;
+                transform: translateY(-2px);
+            }
+
+                .svc-card:hover::before {
+                    opacity: 1;
+                }
+
+        .svc-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #e8f4fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .svc-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #0a4d7c;
+            margin-bottom: 6px;
+        }
+
+        .svc-desc {
+            font-size: 12px;
+            color: #7a9bb0;
+            line-height: 1.55;
+        }
+
+        .svc-badge {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #fdf3d7;
+            color: #c9a227;
+        }
+
+        /* ===== SYMPTOM ===== */
+        .symptom-section {
+            background: #fffbef;
+            border-top: 1px solid rgba(201,162,39,0.2);
+            border-bottom: 1px solid rgba(201,162,39,0.2);
+            padding: 44px 40px;
+        }
+
+        .symptom-grid {
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .sym-card {
+            background: #fff;
+            border: 1px solid rgba(201,162,39,0.25);
+            border-radius: 12px;
+            padding: 16px 14px;
+            cursor: pointer;
+            text-align: center;
+            transition: border-color .2s,transform .15s;
+        }
+
+            .sym-card:hover {
+                border-color: #c9a227;
+                transform: translateY(-2px);
+            }
+
+        .sym-emoji {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .sym-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #0a4d7c;
+            margin-bottom: 4px;
+        }
+
+        .sym-desc {
+            font-size: 11px;
+            color: #7a9bb0;
+            line-height: 1.4;
+        }
+
+        /* ===== DOCTORS ===== */
+        .section-alt {
+            background: #f0f8ff;
+        }
+
+        .doctors-grid {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 20px;
+        }
+
+        .doc-card {
+            background: #fff;
+            border: 1px solid #d4e8f5;
+            border-radius: 14px;
+            overflow: hidden;
+            transition: box-shadow .2s;
+        }
+
+            .doc-card:hover {
+                box-shadow: 0 8px 24px rgba(10,77,124,0.1);
+            }
+
+        .doc-avatar {
+            height: 120px;
+            background: linear-gradient(135deg,#e8f4fd,#f0f8ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .avatar-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #0a4d7c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Crimson Pro',serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            border: 3px solid rgba(255,255,255,0.5);
+        }
+
+        .doc-avail {
+            position: absolute;
+            bottom: 10px;
+            right: 12px;
+            background: #fff;
+            border: 1px solid #c9f0d8;
+            border-radius: 10px;
+            padding: 3px 8px;
+            font-size: 10px;
+            color: #2d7a52;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+            .doc-avail::before {
+                content: '';
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #3aaa6a;
+            }
+
+        .doc-body {
+            padding: 16px;
+        }
+
+        .doc-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #0a4d7c;
+            margin-bottom: 3px;
+        }
+
+        .doc-spec {
+            font-size: 12px;
+            color: #c9a227;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .doc-info {
+            font-size: 11px;
+            color: #7a9bb0;
+            line-height: 1.6;
+        }
+
+        .btn-book {
+            width: 100%;
+            height: 34px;
+            background: #e8f4fd;
+            color: #0a4d7c;
+            border: 1px solid #d4e8f5;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'DM Sans',sans-serif;
+            margin-top: 12px;
+            transition: background .15s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .btn-book:hover {
+                background: #1a6fa8;
+                color: #fff;
+                border-color: #1a6fa8;
+            }
+
+        /* ===== NEWS ===== */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 20px;
+        }
+
+        .news-card {
+            border: 1px solid #d4e8f5;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform .15s;
+            background: #fff;
+        }
+
+            .news-card:hover {
+                transform: translateY(-2px);
+            }
+
+        .news-img {
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            overflow: hidden;
+        }
+
+        .news-body {
+            padding: 14px 16px;
+        }
+
+        .news-cat {
+            font-size: 10px;
+            font-weight: 500;
+            color: #1a6fa8;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 6px;
+        }
+
+        .news-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #0a4d7c;
+            line-height: 1.45;
+            margin-bottom: 6px;
+        }
+
+        .news-meta {
+            font-size: 11px;
+            color: #7a9bb0;
+        }
+    </style>
+}
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-tag">Chuyên khoa Tai Mũi Họng hàng đầu</div>
+        <h1 class="hero-title">Chẩn đoán chính xác,<br>điều trị <em>Tai · Mũi · Họng</em><br>tận tâm</h1>
+        <p class="hero-desc">Đội ngũ bác sĩ chuyên khoa TMH giàu kinh nghiệm, trang thiết bị nội soi hiện đại, điều trị toàn diện các bệnh lý về tai, mũi, họng và đầu cổ cho mọi lứa tuổi.</p>
+        <div class="hero-btns">
+            @if (ViewBag.IsLoggedIn == true)
+            {
+                <a asp-controller="Booking" asp-action="Index" class="btn-hero-primary">Đặt lịch khám ngay</a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Register" class="btn-hero-primary">Đặt lịch khám ngay</a>
+            }
+            <a href="#bac-si" class="btn-hero-secondary">Tìm bác sĩ →</a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-item"><div class="stat-num">18+</div><div class="stat-lbl">Năm kinh nghiệm</div></div>
+            <div class="stat-div"></div>
+            <div class="stat-item"><div class="stat-num">45</div><div class="stat-lbl">Bác sĩ chuyên khoa TMH</div></div>
+            <div class="stat-div"></div>
+            <div class="stat-item"><div class="stat-num">80K+</div><div class="stat-lbl">Bệnh nhân tin tưởng</div></div>
+        </div>
+    </div>
+
+    <!-- Hero Carousel -->
+    <div class="hero-carousel-wrap">
+        <div class="hero-carousel" id="heroCarousel">
+
+            <!-- Slide 1: Giới thiệu bác sĩ -->
+            <div class="carousel-slide" id="slide-0">
+                <div class="slide-img-banner" style="background:url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80') center/cover no-repeat;height:150px;border-radius:12px;margin-bottom:14px;position:relative;overflow:hidden;">
+                    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,77,124,.7),rgba(26,111,168,.5));display:flex;align-items:center;padding:16px;">
+                        <div>
+                            <div class="slide-tag" style="color:#b8ddf8;margin-bottom:4px;">Đội ngũ chuyên gia</div>
+                            <div style="font-family:'Crimson Pro',serif;font-size:20px;font-weight:600;color:#fff;">Bác sĩ của chúng tôi</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="doctors-showcase" id="doctorShowcase">
+                    <div class="doc-card-mini loading-shimmer"></div>
+                    <div class="doc-card-mini loading-shimmer"></div>
+                    <div class="doc-card-mini loading-shimmer"></div>
+                </div>
+                <a href="#bac-si" class="slide-cta">Xem tất cả bác sĩ →</a>
+            </div>
+
+            <!-- Slide 2: Ưu đãi khám -->
+            <div class="carousel-slide" id="slide-1" style="display:none">
+                <div class="slide-img-banner" style="background:url('https://images.unsplash.com/photo-1631815587646-b85a1bb027e1?w=800&q=80') center/cover no-repeat;height:130px;border-radius:12px;margin-bottom:14px;position:relative;overflow:hidden;">
+                    <div style="position:absolute;inset:0;background:rgba(10,77,124,.55);display:flex;align-items:center;justify-content:center;">
+                        <span style="font-size:36px;">🎁</span>
+                    </div>
+                </div>
+                <div class="promo-badge">Ưu đãi tháng này</div>
+                <div class="promo-title">Khám & Tư vấn<br><span>Miễn phí</span></div>
+                <div class="promo-desc">Đặt lịch lần đầu — được miễn phí tư vấn với bác sĩ chuyên khoa TMH. Áp dụng đến hết tháng 4/2026.</div>
+                <div class="promo-items">
+                    <div class="promo-item">✅ Khám tai mũi họng tổng quát</div>
+                    <div class="promo-item">✅ Tư vấn phác đồ điều trị</div>
+                    <div class="promo-item">✅ Không mất phí khám lần đầu</div>
+                </div>
+                @if (ViewBag.IsLoggedIn == true)
+                {
+                    <a asp-controller="Booking" asp-action="Index" class="slide-cta-btn">Đặt lịch ngay</a>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Register" class="slide-cta-btn">Đăng ký & Đặt lịch</a>
+                }
+            </div>
+
+            <!-- Slide 3: Thống kê phòng khám -->
+            <div class="carousel-slide" id="slide-2" style="display:none">
+                <div class="slide-img-banner" style="background:url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80') center/cover no-repeat;height:130px;border-radius:12px;margin-bottom:14px;position:relative;overflow:hidden;">
+                    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,77,124,.65),rgba(26,111,168,.45));display:flex;align-items:center;padding:16px;">
+                        <div>
+                            <div class="slide-tag" style="color:#b8ddf8;margin-bottom:4px;">Tại sao chọn chúng tôi?</div>
+                            <div style="font-family:'Crimson Pro',serif;font-size:18px;font-weight:600;color:#fff;">Phòng khám TMH hàng đầu</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-tag" style="display:none;">Tại sao chọn chúng tôi?</div>
+                <div class="slide-title" style="display:none;">Phòng khám TMH<br>hàng đầu Hà Nội</div>
+                <div class="stats-showcase">
+                    <div class="stat-big"><span class="stat-big-num">18+</span><span class="stat-big-lbl">Năm kinh nghiệm</span></div>
+                    <div class="stat-big"><span class="stat-big-num">3</span><span class="stat-big-lbl">Bác sĩ chuyên khoa</span></div>
+                    <div class="stat-big"><span class="stat-big-num">80K+</span><span class="stat-big-lbl">Bệnh nhân</span></div>
+                    <div class="stat-big"><span class="stat-big-num">15'</span><span class="stat-big-lbl">Xác nhận lịch</span></div>
+                </div>
+                <div class="trust-badges">
+                    <div class="trust-item">🏥 Thiết bị nội soi hiện đại</div>
+                    <div class="trust-item">🎓 Bác sĩ tốt nghiệp nước ngoài</div>
+                    <div class="trust-item">⏰ Đặt lịch 24/7</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Dots navigation -->
+        <div class="carousel-dots">
+            <button class="dot active" onclick="goSlide(0)"></button>
+            <button class="dot" onclick="goSlide(1)"></button>
+            <button class="dot" onclick="goSlide(2)"></button>
+        </div>
+    </div>
+</section>
+
+<!-- SYMPTOM CHECKER -->
+<section class="symptom-section" id="trieu-chung">
+    <div class="section-tag" style="background:#fdf3d7;color:#c9a227;">Triệu chứng thường gặp</div>
+    <div class="section-title">Bạn đang gặp vấn đề gì?</div>
+    <div class="section-sub">Chọn triệu chứng để được tư vấn và đặt lịch khám phù hợp</div>
+    <div class="symptom-grid">
+        <a asp-controller="Account" asp-action="@(ViewBag.IsLoggedIn == true ? null : "Login")" class="sym-card" style="text-decoration:none;">
+            <div class="sym-emoji">👂</div>
+            <div class="sym-name">Ù tai · Nghe kém</div>
+            <div class="sym-desc">Tiếng ve, tiếng vo ve trong tai, nghe không rõ</div>
+        </a>
+        <div class="sym-card">
+            <div class="sym-emoji">🤧</div>
+            <div class="sym-name">Nghẹt mũi · Viêm xoang</div>
+            <div class="sym-desc">Chảy nước mũi, đau đầu, đau vùng mặt</div>
+        </div>
+        <div class="sym-card">
+            <div class="sym-emoji">🗣️</div>
+            <div class="sym-name">Đau họng · Khàn tiếng</div>
+            <div class="sym-desc">Nuốt đau, rát họng, giọng khàn kéo dài</div>
+        </div>
+        <div class="sym-card">
+            <div class="sym-emoji">💫</div>
+            <div class="sym-name">Chóng mặt · Mất thăng bằng</div>
+            <div class="sym-desc">Cảm giác quay cuồng, buồn nôn, đi không vững</div>
+        </div>
+    </div>
+</section>
+
+<!-- SERVICES -->
+<section class="section" id="dich-vu">
+    <div class="section-tag">Dịch vụ chuyên khoa</div>
+    <div class="section-title">Dịch vụ Tai · Mũi · Họng</div>
+    <div class="section-sub">Trang bị hệ thống nội soi TMH thế hệ mới, chẩn đoán chính xác và điều trị hiệu quả</div>
+    <div class="services-grid">
+        <div class="svc-card">
+            <div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="7" stroke="#1a6fa8" stroke-width="1.5" /><circle cx="11" cy="11" r="3" fill="#1a6fa8" opacity="0.3" /><path d="M16 16l3 3" stroke="#1a6fa8" stroke-width="1.8" stroke-linecap="round" /></svg></div>
+            <div class="svc-name">Nội soi TMH</div>
+            <div class="svc-desc">Nội soi tai, mũi, họng, thanh quản bằng ống soi mềm độ phân giải cao.</div>
+            <span class="svc-badge">✦ Công nghệ HD</span>
+        </div>
+        <div class="svc-card">
+            <div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 11c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6" stroke="#1a6fa8" stroke-width="1.5" stroke-linecap="round" /><path d="M8 11c0-1.7 1.3-3 3-3" stroke="#1a6fa8" stroke-width="1.5" stroke-linecap="round" /><circle cx="11" cy="11" r="1.5" fill="#1a6fa8" /></svg></div>
+            <div class="svc-name">Đo thính lực</div>
+            <div class="svc-desc">Đánh giá toàn diện chức năng nghe — đo nhĩ lượng, đo thính lực đơn âm.</div>
+            <span class="svc-badge">Trẻ em từ 3 tuổi</span>
+        </div>
+        <div class="svc-card">
+            <div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><ellipse cx="11" cy="9" rx="5" ry="4" stroke="#1a6fa8" stroke-width="1.5" /><path d="M11 13v5" stroke="#1a6fa8" stroke-width="1.5" stroke-linecap="round" /><path d="M8 16h6" stroke="#1a6fa8" stroke-width="1.5" stroke-linecap="round" /></svg></div>
+            <div class="svc-name">Điều trị viêm xoang</div>
+            <div class="svc-desc">Điều trị nội khoa và phẫu thuật nội soi xoang chức năng (FESS) tiên tiến.</div>
+        </div>
+        <div class="svc-card">
+            <div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M7 8c0-2.2 1.8-4 4-4s4 1.8 4 4c0 2-1.2 3.5-3 4v4h-2v-4c-1.8-.5-3-2-3-4z" stroke="#1a6fa8" stroke-width="1.5" stroke-linejoin="round" /></svg></div>
+            <div class="svc-name">Phẫu thuật Amidan &amp; VA</div>
+            <div class="svc-desc">Cắt amidan, nạo VA bằng dao điện lưỡng cực hoặc Coblation, ít chảy máu.</div>
+            <span class="svc-badge">Không đau · Hồi phục nhanh</span>
+        </div>
+    </div>
+</section>
+
+<!-- DOCTORS -->
+<section class="section section-alt" id="bac-si">
+    <div class="section-tag">Đội ngũ y tế</div>
+    <div class="section-title">Bác sĩ chuyên khoa TMH</div>
+    <div class="section-sub">Đội ngũ bác sĩ Tai Mũi Họng được đào tạo chuyên sâu trong và ngoài nước</div>
+    <div class="doctors-grid">
+        <div class="doc-card">
+            <div class="doc-avatar"><div class="avatar-circle">NV</div><div class="doc-avail">Còn lịch hôm nay</div></div>
+            <div class="doc-body">
+                <div class="doc-name">TS.BS. Nguyễn Thanh Vân</div>
+                <div class="doc-spec">TMH — Phẫu thuật nội soi xoang</div>
+                <div class="doc-info">22 năm kinh nghiệm · BV Tai Mũi Họng TW<br>Tiến sĩ Y khoa ĐH Tokyo, Nhật Bản</div>
+                @if (ViewBag.IsLoggedIn == true)
+                {
+                    <a href="/Booking/Index?doctorId=1" class="btn-book">Đặt lịch khám</a>
+                }
+                else
+                {
+                    <a href="/Account/Login?returnUrl=/Booking/Index?doctorId=1" class="btn-book">Đặt lịch khám</a>
+                }
+            </div>
+        </div>
+        <div class="doc-card">
+            <div class="doc-avatar"><div class="avatar-circle" style="background:#c9a227">TL</div><div class="doc-avail">Còn lịch hôm nay</div></div>
+            <div class="doc-body">
+                <div class="doc-name">PGS.BS. Trần Minh Linh</div>
+                <div class="doc-spec">TMH — Thính học &amp; cấy ốc tai điện tử</div>
+                <div class="doc-info">18 năm kinh nghiệm · BV Đại học Y Dược<br>Thạc sĩ Thính học ĐH Melbourne</div>
+                @if (ViewBag.IsLoggedIn == true)
+                {
+                    <a href="/Booking/Index?doctorId=2" class="btn-book">Đặt lịch khám</a>
+                }
+                else
+                {
+                    <a href="/Account/Login?returnUrl=/Booking/Index?doctorId=2" class="btn-book">Đặt lịch khám</a>
+                }
+            </div>
+        </div>
+        <div class="doc-card">
+            <div class="doc-avatar">
+                <div class="avatar-circle" style="background:#1a6fa8">PH</div>
+                <div class="doc-avail" style="color:#b06a00;border-color:#fde8b0;background:#fffbef">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#c9a227;display:inline-block"></span>
+                    Còn lịch ngày mai
+                </div>
+            </div>
+            <div class="doc-body">
+                <div class="doc-name">TS.BS. Phạm Thị Hương</div>
+                <div class="doc-spec">TMH Nhi — Viêm tai giữa trẻ em</div>
+                <div class="doc-info">14 năm kinh nghiệm · BV Nhi Đồng 2<br>Tiến sĩ TMH Nhi ĐH Seoul, Hàn Quốc</div>
+                @if (ViewBag.IsLoggedIn == true)
+                {
+                    <a href="/Booking/Index?doctorId=3" class="btn-book">Đặt lịch khám</a>
+                }
+                else
+                {
+                    <a href="/Account/Login?returnUrl=/Booking/Index?doctorId=3" class="btn-book">Đặt lịch khám</a>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- NEWS -->
+<section class="section" id="tin-tuc">
+    <div class="section-tag">Tin tức y tế</div>
+    <div class="section-title">Kiến thức Tai · Mũi · Họng</div>
+    <div class="section-sub">Thông tin chuyên sâu từ đội ngũ bác sĩ TMH của chúng tôi</div>
+    <div class="news-grid" id="homeNewsGrid">
+        <!-- Skeleton loading -->
+        <div class="news-card" style="opacity:.4">
+            <div class="news-img" style="background:#f0f8ff"></div>
+            <div class="news-body">
+                <div style="height:10px;background:#e0edf5;border-radius:4px;width:60%;margin-bottom:8px"></div>
+                <div style="height:13px;background:#e0edf5;border-radius:4px;margin-bottom:6px"></div>
+                <div style="height:11px;background:#e0edf5;border-radius:4px;width:70%"></div>
+            </div>
+        </div>
+        <div class="news-card" style="opacity:.4">
+            <div class="news-img" style="background:#fff8e8"></div>
+            <div class="news-body">
+                <div style="height:10px;background:#f0e8c8;border-radius:4px;width:60%;margin-bottom:8px"></div>
+                <div style="height:13px;background:#f0e8c8;border-radius:4px;margin-bottom:6px"></div>
+                <div style="height:11px;background:#f0e8c8;border-radius:4px;width:70%"></div>
+            </div>
+        </div>
+        <div class="news-card" style="opacity:.4">
+            <div class="news-img" style="background:#f0fff4"></div>
+            <div class="news-body">
+                <div style="height:10px;background:#c8e8d0;border-radius:4px;width:60%;margin-bottom:8px"></div>
+                <div style="height:13px;background:#c8e8d0;border-radius:4px;margin-bottom:6px"></div>
+                <div style="height:11px;background:#c8e8d0;border-radius:4px;width:70%"></div>
+            </div>
+        </div>
+    </div>
+    <div style="text-align:center;margin-top:24px;">
+        <a href="/News" style="display:inline-block;padding:10px 28px;border:1.5px solid #0a4d7c;border-radius:8px;color:#0a4d7c;font-size:13px;font-weight:500;text-decoration:none;font-family:'DM Sans',sans-serif;transition:all .15s;"
+           onmouseover="this.style.background='#0a4d7c';this.style.color='#fff'"
+           onmouseout="this.style.background='';this.style.color='#0a4d7c'">
+            Xem tất cả bài viết →
+        </a>
+    </div>
+</section>
+
+@{
+    var articlesJson = ViewBag.ArticlesJson as string ?? "[]";
+}
+<script type="application/json" id="_homeArticlesData">@Html.Raw(articlesJson)</script>
+<script>
+(function() {
+    var bgColors = [
+        'linear-gradient(135deg,#e8f4fd,#d4ecf9)',
+        'linear-gradient(135deg,#fdf3d7,#fde8b0)',
+        'linear-gradient(135deg,#e6f7ef,#c9f0d8)',
+        'linear-gradient(135deg,#fdecea,#f9c9c9)',
+        'linear-gradient(135deg,#f3e8fd,#e4c9f9)'
+    ];
+    var catIcons = {
+        'Viem xoang':'🤧','Thinh hoc':'👂','Hong — Thanh quan':'😴',
+        'TMH Nhi':'👶','Phau thuat noi soi':'🔬','Phong ngua':'💊','Khac':'📋'
+    };
+    function getIcon(cat) {
+        var map = {'Viêm xoang':'🤧','Thính học':'👂','Hồng — Thanh quản':'😴','TMH Nhi':'👶','Phẫu thuật nội soi':'🔬','Phòng ngừa':'💊'};
+        return map[cat] || '📋';
+    }
+    try {
+        var articles = JSON.parse(document.getElementById('_homeArticlesData').textContent || '[]');
+        var grid = document.getElementById('homeNewsGrid');
+        if (!Array.isArray(articles) || !articles.length) {
+            grid.innerHTML = '<p style="color:#7a9bb0;font-size:13px;text-align:center;grid-column:1/-1">Chưa có bài viết nào.</p>';
+            return;
+        }
+        grid.innerHTML = articles.map(function(a, i) {
+            var bg  = bgColors[i % bgColors.length];
+            var ico = getIcon(a.category);
+            var date = a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('vi-VN') : '';
+            var imgDiv = a.thumbnail
+                ? '<div class="news-img" style="background:#f0f8ff;padding:0;overflow:hidden"><img src="' + a.thumbnail + '" style="width:100%;height:100%;object-fit:contain" /></div>'
+                : '<div class="news-img" style="background:' + bg + '">' + ico + '</div>';
+            return '<a href="/News/Detail/' + a.id + '" style="text-decoration:none">' +
+                '<div class="news-card">' + imgDiv +
+                    '<div class="news-body">' +
+                        '<div class="news-cat">' + (a.category||'') + '</div>' +
+                        '<div class="news-title">' + (a.title||'') + '</div>' +
+                        '<div class="news-meta">' + (a.authorName||'') + (date?' · '+date:'') + '</div>' +
+                    '</div>' +
+                '</div></a>';
+        }).join('');
+    } catch(e) {
+        console.error('News render error:', e);
+    }
+
+    // ── Hero Carousel ─────────────────────────────────────────────
+    var currentSlide = 0;
+    var totalSlides  = 3;
+    var carouselTimer;
+
+    function goSlide(n) {
+        document.getElementById('slide-' + currentSlide).style.display = 'none';
+        document.querySelectorAll('.dot')[currentSlide].classList.remove('active');
+        currentSlide = n;
+        document.getElementById('slide-' + currentSlide).style.display = 'block';
+        document.querySelectorAll('.dot')[currentSlide].classList.add('active');
+        resetTimer();
+    }
+
+    function nextSlide() { goSlide((currentSlide + 1) % totalSlides); }
+
+    function resetTimer() {
+        clearInterval(carouselTimer);
+        carouselTimer = setInterval(nextSlide, 5000);
+    }
+
+    // Load doctors vào slide 1
+    fetch('/api/article/published?limit=1')  // dummy call để test connection
+        .catch(function(){});
+
+    // Load doctors từ API appointment/available-doctors
+    fetch('/Booking/GetDoctorsJson')
+        .then(function(r){ return r.json(); })
+        .then(function(docs) {
+            var showcase = document.getElementById('doctorShowcase');
+            if (!docs || !docs.length) {
+                showcase.innerHTML = '<div style="font-size:12px;color:#7a9bb0;text-align:center;padding:12px">Đang cập nhật...</div>';
+                return;
+            }
+            var avatarImgs = [
+                'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=80&q=80',
+                'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=80&q=80',
+                'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=80&q=80'
+            ];
+            showcase.innerHTML = docs.slice(0,3).map(function(d, i) {
+                var name = d.fullName || d.FullName || '';
+                var spec = d.specialty || d.Specialty || '';
+                var deg  = d.degree || d.Degree || '';
+                return '<div class="doc-card-mini">' +
+                    '<img src="' + avatarImgs[i] + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;" />' +
+                    '<div class="doc-info">' +
+                        '<div class="doc-name">' + (deg ? deg + '. ' : '') + name + '</div>' +
+                        '<div class="doc-spec">' + spec + '</div>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        })
+        .catch(function() {
+            var docImgs = [
+                'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=80&q=80',
+                'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=80&q=80',
+                'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=80&q=80'
+            ];
+            var docs = [
+                ['TS.BS. Nguyễn Thanh Vân','Tai Mũi Họng — Phẫu thuật nội soi'],
+                ['PGS.BS. Trần Minh Linh','Tai Mũi Họng — Thính học & cấy ốc tai'],
+                ['TS.BS. Phạm Thị Hương','TMH Nhi — Viêm tai giữa trẻ em']
+            ];
+            document.getElementById('doctorShowcase').innerHTML = docs.map(function(d, i) {
+                return '<div class="doc-card-mini">' +
+                    '<img src="' + docImgs[i] + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;" />' +
+                    '<div class="doc-info"><div class="doc-name">' + d[0] + '</div><div class="doc-spec">' + d[1] + '</div></div>' +
+                    '</div>';
+            }).join('');
+        });
+
+    resetTimer();
+})();
+</script>

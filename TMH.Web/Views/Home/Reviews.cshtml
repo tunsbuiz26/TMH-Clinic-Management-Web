@@ -1,0 +1,138 @@
+@model List<TMH.Shared.DTOs.DoctorRatingSummaryDto>
+@{
+    ViewBag.Title = "Đánh giá bác sĩ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .rv-wrap { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .rv-header { margin-bottom: 32px; }
+    .rv-title { font-family: 'Crimson Pro', serif; font-size: 32px; font-weight: 700; color: #0a4d7c; }
+    .rv-sub { font-size: 14px; color: #7a9bb0; margin-top: 6px; }
+    .rv-card { background: #fff; border: 1px solid #d4e8f5; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+    .rv-card:hover { border-color: #1a6fa8; }
+    .rv-doc-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .rv-avatar { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg,#0a4d7c,#1a9cdb); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .rv-doc-info { flex: 1; }
+    .rv-doc-name { font-size: 16px; font-weight: 600; color: #0a4d7c; }
+    .rv-doc-spec { font-size: 12px; color: #c9a227; font-weight: 500; margin-top: 2px; }
+    .rv-rating-big { text-align: right; }
+    .rv-score { font-size: 32px; font-weight: 700; color: #ffc107; line-height: 1; }
+    .rv-stars { color: #ffc107; font-size: 16px; }
+    .rv-count { font-size: 12px; color: #7a9bb0; margin-top: 2px; }
+    .rv-divider { border: none; border-top: 1px solid #eef3f8; margin: 16px 0; }
+    .rv-comment-list { display: flex; flex-direction: column; gap: 12px; }
+    .rv-comment { background: #f8fbff; border-radius: 10px; padding: 12px 14px; }
+    .rv-comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .rv-comment-name { font-size: 13px; font-weight: 500; color: #3a5a72; }
+    .rv-comment-stars { color: #ffc107; font-size: 13px; }
+    .rv-comment-date { font-size: 11px; color: #aab8c5; margin-left: auto; }
+    .rv-comment-text { font-size: 13px; color: #444; line-height: 1.5; }
+    .rv-no-review { font-size: 13px; color: #aab8c5; font-style: italic; }
+    .rv-empty { text-align: center; padding: 60px 20px; color: #7a9bb0; }
+    .badge-new { background: #d4edda; color: #155724; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+    .sort-bar { display: flex; gap: 8px; margin-bottom: 24px; }
+    .sort-btn { height: 32px; padding: 0 14px; border: 1px solid #d4e8f5; border-radius: 20px; font-size: 12px; color: #3a5a72; background: #fff; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .sort-btn.active { background: #0a4d7c; color: #fff; border-color: #0a4d7c; }
+</style>
+
+<div class="rv-wrap">
+    <div class="rv-header">
+        <div class="rv-title">Đánh giá bác sĩ</div>
+        <div class="rv-sub">Tổng hợp nhận xét từ bệnh nhân đã khám — giúp bạn chọn bác sĩ phù hợp nhất</div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="rv-empty">
+            <div style="font-size:48px;opacity:.3;margin-bottom:16px;">⭐</div>
+            <div style="font-size:16px;font-weight:500;color:#3a5a72;margin-bottom:8px;">Chưa có đánh giá nào</div>
+            <div style="font-size:13px;">Hãy đặt lịch và chia sẻ trải nghiệm sau ca khám của bạn!</div>
+        </div>
+    }
+    else
+    {
+        <div class="sort-bar">
+            <button class="sort-btn active" onclick="sortCards('rating', this)">Điểm cao nhất</button>
+            <button class="sort-btn" onclick="sortCards('reviews', this)">Nhiều đánh giá nhất</button>
+        </div>
+
+        <div id="cardContainer">
+        @foreach (var doc in Model)
+        {
+            var initials = doc.DoctorName.Trim().Split(' ').TakeLast(2).Select(w => w[0].ToString().ToUpper()).Aggregate("", (a, b) => a + b);
+            var fullStars = (int)Math.Round(doc.AverageRating);
+            <div class="rv-card" data-rating="@doc.AverageRating.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)" data-reviews="@doc.TotalReviews">
+                <div class="rv-doc-row">
+                    <div class="rv-avatar">@initials</div>
+                    <div class="rv-doc-info">
+                        <div class="rv-doc-name">@doc.DoctorName</div>
+                        <div class="rv-doc-spec">@doc.Specialty</div>
+                    </div>
+                    <div class="rv-rating-big">
+                        @if (doc.TotalReviews > 0)
+                        {
+                            <div class="rv-score">@doc.AverageRating.ToString("F1")</div>
+                            <div class="rv-stars">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <span style="opacity:@(i <= fullStars ? "1" : "0.25")">★</span>
+                                }
+                            </div>
+                            <div class="rv-count">@doc.TotalReviews đánh giá</div>
+                        }
+                        else
+                        {
+                            <div style="font-size:12px;color:#aab8c5;">Chưa có đánh giá</div>
+                        }
+                    </div>
+                </div>
+
+                @if (doc.RecentReviews.Any())
+                {
+                    <hr class="rv-divider" />
+                    <div class="rv-comment-list">
+                        @foreach (var r in doc.RecentReviews)
+                        {
+                            <div class="rv-comment">
+                                <div class="rv-comment-header">
+                                    <span class="rv-comment-name">@r.PatientName</span>
+                                    <span class="rv-comment-stars">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <span style="opacity:@(i <= r.Rating ? "1" : "0.25")">★</span>
+                                        }
+                                    </span>
+                                    <span class="rv-comment-date">@r.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(r.Comment))
+                                {
+                                    <div class="rv-comment-text">"@r.Comment"</div>
+                                }
+                                else
+                                {
+                                    <div class="rv-no-review">Không có nhận xét</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        </div>
+    }
+</div>
+
+<script>
+    function sortCards(by, btn) {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        var container = document.getElementById('cardContainer');
+        var cards = Array.from(container.querySelectorAll('.rv-card'));
+        cards.sort(function(a, b) {
+            var va = parseFloat(a.dataset[by] || 0);
+            var vb = parseFloat(b.dataset[by] || 0);
+            return vb - va;
+        });
+        cards.forEach(c => container.appendChild(c));
+    }
+</script>

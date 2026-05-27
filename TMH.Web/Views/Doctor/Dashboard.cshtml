@@ -1,0 +1,2079 @@
+@model List<TMH.Shared.DTOs.AppointmentDetailDto>
+@{
+    ViewBag.Title = "Dashboard Bác sĩ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+<style>
+    .doc-wrap { max-width: 1000px; margin: 32px auto; padding: 0 20px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-family: 'Crimson Pro', serif; font-size: 26px; font-weight: 600; color: #0a4d7c; }
+    .page-sub   { font-size: 13px; color: #7a9bb0; margin-top: 2px; }
+
+    /* Sub-tabs */
+    .sub-tab-bar { display: flex; border-bottom: 2px solid #d4e8f5; margin-bottom: 20px; }
+    .sub-tab-btn { padding: 10px 20px; font-size: 13px; font-weight: 500; color: #7a9bb0; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+    .sub-tab-btn:hover { color: #0a4d7c; }
+    .sub-tab-btn.active { color: #0a4d7c; border-bottom-color: #0a4d7c; }
+
+    /* Toolbar */
+    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid #d4e8f5; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; }
+    .toolbar label { font-size: 12px; font-weight: 500; color: #3a5a72; text-transform: uppercase; letter-spacing: .04em; }
+    .toolbar input[type=date] { height: 36px; border: 1px solid #d4e8f5; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #0d2d44; outline: none; font-family: 'DM Sans', sans-serif; }
+    .btn-load { height: 36px; padding: 0 18px; background: #0a4d7c; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-load:hover { background: #1a6fa8; }
+
+    /* Stats */
+    .stats-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 110px; background: #fff; border: 1px solid #d4e8f5; border-radius: 10px; padding: 12px 16px; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 700; color: #0a4d7c; }
+    .stat-lbl { font-size: 11px; color: #7a9bb0; margin-top: 2px; }
+    .stat-card.den  .stat-num { color: #004085; }
+    .stat-card.kham .stat-num { color: #155724; }
+    .stat-card.hoan .stat-num { color: #383d41; }
+
+    /* Patient cards */
+    .patient-list { display: flex; flex-direction: column; gap: 14px; }
+    .patient-card { background: #fff; border: 1px solid #d4e8f5; border-radius: 16px; padding: 18px 20px; display: flex; gap: 16px; align-items: flex-start; transition: all .2s ease; }
+    .patient-card:hover { border-color: #1a6fa8; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(10,77,124,.12); }
+    .patient-card.card-waiting  { border-left: 4px solid #1a6fa8; }
+    .patient-card.card-started  { border-left: 4px solid #2d7a52; }
+    .patient-card.card-done     { border-left: 4px solid #aab8c2; opacity: .85; }
+    .patient-card.card-inactive { border-left: 4px solid #e74c3c; opacity: .7; }
+
+    /* Patient avatar with initials */
+    .pc-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0; margin-top: 2px; letter-spacing: .03em; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+    .pc-av-den  { background: linear-gradient(135deg, #1a6fa8, #0a4d7c); }
+    .pc-av-kham { background: linear-gradient(135deg, #2d9e6b, #1e6b48); }
+    .pc-av-hoan { background: linear-gradient(135deg, #868e96, #5a6268); }
+    .pc-av-huy  { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .pc-av-cho  { background: linear-gradient(135deg, #c9a227, #a67c00); }
+
+    .patient-info { flex: 1; min-width: 0; }
+    /* Card header: name left, status badge right */
+    .pc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .patient-name { font-size: 15px; font-weight: 600; color: #0a4d7c; line-height: 1.35; }
+    .patient-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #7a9bb0; margin-bottom: 10px; align-items: center; }
+
+    /* Time pill */
+    .pc-time-pill { display: inline-flex; align-items: center; gap: 4px; background: #e8f4fd; color: #0a4d7c; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+
+    .booking-code { font-family: monospace; font-size: 11px; background: #f0f8ff; padding: 2px 8px; border-radius: 4px; color: #1a6fa8; border: 1px solid #d4e8f5; }
+
+    /* Symptom / note — amber callout */
+    .patient-note { font-size: 12px; color: #6d4c00; background: #fffbeb; border-left: 3px solid #f0a500; padding: 7px 12px; border-radius: 0 8px 8px 0; margin-bottom: 8px; line-height: 1.55; }
+
+    .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .badge-den  { background: #cce5ff; color: #004085; }
+    .badge-kham { background: #d4edda; color: #155724; }
+    .badge-hoan { background: #e2e3e5; color: #383d41; }
+    .badge-cho  { background: #fff3cd; color: #856404; }
+    .badge-vang { background: #fdecea; color: #a32d2d; }
+    .badge-huy  { background: #f8d7da; color: #721c24; }
+
+    /* Actions — bác sĩ */
+    .patient-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; min-width: 150px; flex-shrink: 0; }
+    .btn-action { height: 32px; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid; font-family: 'DM Sans', sans-serif; white-space: nowrap; transition: all .15s; }
+
+    /* Bắt đầu khám: DaDen → DangKham */
+    .btn-start { background: #cce5ff; color: #004085; border-color: #99caef; }
+    .btn-start:hover { background: #004085; color: #fff; }
+
+    /* Hoàn thành: DangKham → HoanThanh */
+    .btn-done  { background: #d4edda; color: #155724; border-color: #b8ddc4; }
+    .btn-done:hover { background: #155724; color: #fff; }
+
+    /* Ghi chuẩn đoán (mở panel) */
+    .btn-diag  { background: #0a4d7c; color: #fff; border-color: #0a4d7c; }
+    .btn-diag:hover { background: #1a6fa8; }
+
+    .lbl-staff { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #856404; background: #fff3cd; border: 1px solid #ffc107; border-radius: 12px; padding: 4px 10px; font-weight: 500; }
+
+    /* Diagnosis existing (inline display on card) */
+    .diag-existing { font-size: 12px; color: #2d7a52; background: #f0faf4; border-left: 3px solid #2d7a52; padding: 6px 10px; border-radius: 0 6px 6px 0; margin-bottom: 6px; }
+
+    /* ── Modal ghi chuẩn đoán ─────────────────────────────────── */
+    .diag-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.52); z-index: 9998; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; backdrop-filter: blur(2px); }
+    .diag-overlay.open { display: flex; }
+    .diag-modal { background: #fff; border-radius: 18px; padding: 0; width: 580px; max-width: 96vw; box-shadow: 0 24px 64px rgba(0,0,0,.22); overflow: hidden; }
+    .diag-modal-head { background: linear-gradient(135deg, #0a4d7c, #1a6fa8); padding: 20px 24px; display: flex; align-items: center; gap: 12px; }
+    .diag-modal-icon { width: 40px; height: 40px; background: rgba(255,255,255,.18); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .diag-modal-title { color: #fff; font-size: 16px; font-weight: 700; margin: 0; }
+    .diag-modal-sub   { color: rgba(255,255,255,.75); font-size: 12px; margin-top: 2px; }
+    .diag-modal-body  { padding: 22px 24px; }
+    .diag-info-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; background: #f5faff; border: 1px solid #d4e8f5; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; }
+    .diag-info-item   { font-size: 12px; }
+    .diag-info-label  { color: #7a9bb0; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 2px; }
+    .diag-info-value  { color: #0d2d44; font-weight: 500; }
+    .diag-symptom-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; margin-bottom: 18px; font-size: 13px; color: #6d4c00; line-height: 1.6; }
+    .diag-symptom-lbl { font-size: 11px; font-weight: 600; color: #a67c00; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; display: block; }
+    .diag-field-label { font-size: 12px; font-weight: 600; color: #3a5a72; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; display: block; }
+    .diag-field-wrap  { margin-bottom: 16px; }
+    .diag-textarea    { width: 100%; border: 1.5px solid #d4e8f5; border-radius: 10px; padding: 10px 14px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; resize: vertical; min-height: 80px; box-sizing: border-box; color: #0d2d44; transition: border-color .15s; }
+    .diag-textarea:focus { border-color: #1a6fa8; box-shadow: 0 0 0 3px rgba(26,111,168,.1); }
+    .diag-modal-footer { padding: 16px 24px; border-top: 1px solid #eef3f8; display: flex; gap: 10px; justify-content: flex-end; align-items: center; background: #fafcff; }
+    .diag-msg { font-size: 12px; margin-right: auto; }
+    .diag-msg.ok  { color: #2d7a52; }
+    .diag-msg.err { color: #c0392b; }
+    .btn-diag-cancel { height: 38px; padding: 0 18px; background: #f0f0f0; color: #555; border: none; border-radius: 9px; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-diag-save   { height: 38px; padding: 0 18px; background: #0a4d7c; color: #fff; border: none; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-diag-save:hover   { background: #1a6fa8; }
+    .btn-diag-done   { height: 38px; padding: 0 18px; background: #2d7a52; color: #fff; border: none; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-diag-done:hover   { background: #1e5c3a; }
+    .empty-state { text-align: center; padding: 48px 20px; color: #7a9bb0; font-size: 13px; background: #fff; border: 1px solid #d4e8f5; border-radius: 14px; }
+
+    /* ── Loại khám badge ───────────────────────────────────────── */
+    .badge-taikham { background: #e8f5e9; color: #2d7a52; border: 1px solid #b2dfdb; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+    .badge-khamoi  { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+
+    /* ── Nút xem lịch sử (tái khám) ───────────────────────────── */
+    .btn-history { height: 30px; padding: 0 12px; background: #e8f5e9; color: #2d7a52; border: 1px solid #b2dfdb; border-radius: 7px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; transition: all .15s; }
+    .btn-history:hover { background: #2d7a52; color: #fff; }
+
+    /* ── Modal lịch sử khám ────────────────────────────────────── */
+    .hist-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9995; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+    .hist-overlay.open { display: flex; }
+    .hist-box { background: #fff; border-radius: 16px; padding: 28px; width: 640px; max-width: 96vw; margin: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .hist-title { font-size: 16px; font-weight: 700; color: #0a4d7c; margin-bottom: 4px; }
+    .hist-sub   { font-size: 12px; color: #7a9bb0; margin-bottom: 20px; }
+    .hist-item  { border: 1px solid #d4e8f5; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; background: #f8fbff; }
+    .hist-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .hist-date  { font-size: 13px; font-weight: 600; color: #0a4d7c; }
+    .hist-code  { font-family: monospace; font-size: 11px; background: #f0f8ff; padding: 2px 8px; border-radius: 4px; color: #1a6fa8; border: 1px solid #d4e8f5; }
+    .hist-diag  { font-size: 13px; color: #0d2d44; background: #fff; border-left: 3px solid #2d7a52; padding: 7px 12px; border-radius: 0 8px 8px 0; margin-bottom: 6px; line-height: 1.55; }
+    .hist-note  { font-size: 12px; color: #6d4c00; background: #fffbeb; border-left: 3px solid #f0a500; padding: 6px 10px; border-radius: 0 7px 7px 0; line-height: 1.5; }
+    .hist-empty { text-align: center; color: #7a9bb0; font-size: 13px; padding: 24px; }
+    .hist-footer { text-align: right; margin-top: 16px; }
+    .btn-hist-close { height: 36px; padding: 0 20px; background: #f0f0f0; color: #555; border: none; border-radius: 9px; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .hist-loading { text-align: center; color: #7a9bb0; font-size: 13px; padding: 24px; }
+
+    /* ── Nút mắt xem chi tiết (trong hist-item) ──────────────── */
+    .btn-eye-hist { height: 26px; padding: 0 9px; background: #e8f4fd; color: #0a4d7c; border: 1px solid #b8d8f0; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; transition: all .15s; }
+    .btn-eye-hist:hover { background: #0a4d7c; color: #fff; }
+
+    /* ── Overlay chi tiết lịch sử (z-index cao hơn histModal) ─── */
+    .hd-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: 10000; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 24px 16px; backdrop-filter: blur(3px); }
+    .hd-overlay.open { display: flex; }
+    .hd-ctrl { display: flex; gap: 10px; justify-content: flex-end; max-width: 720px; margin: 0 auto 12px; }
+    .hd-ctrl-btn { height: 38px; padding: 0 18px; background: rgba(255,255,255,.9); color: #555; border: none; border-radius: 9px; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .hd-sheet { background: #fff; width: 720px; max-width: 100%; border-radius: 12px; padding: 44px 48px; font-family: 'Times New Roman', serif; margin: 0 auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .hd-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0a4d7c; padding-bottom: 18px; margin-bottom: 22px; }
+    .hd-clinic-name { font-size: 15px; font-weight: bold; color: #0a4d7c; text-transform: uppercase; letter-spacing: .03em; }
+    .hd-clinic-addr { font-size: 11px; color: #666; margin-top: 4px; line-height: 1.5; font-family: 'DM Sans', sans-serif; }
+    .hd-logo-box { width: 52px; height: 52px; background: #0a4d7c; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; flex-shrink: 0; }
+    .hd-title-main { text-align: center; font-size: 20px; font-weight: bold; color: #0a2d4a; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+    .hd-code-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 12px; color: #7a9bb0; margin-bottom: 24px; }
+    .hd-section { margin-bottom: 20px; }
+    .hd-section-hd { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #0a4d7c; background: #f0f8ff; padding: 5px 10px; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .hd-row { display: flex; gap: 8px; margin-bottom: 7px; font-size: 13px; padding: 0 6px; font-family: 'DM Sans', sans-serif; }
+    .hd-lbl { color: #555; min-width: 170px; flex-shrink: 0; }
+    .hd-val { color: #111; font-weight: 500; flex: 1; }
+    .hd-diag-box { border: 1.5px solid #0a4d7c; border-radius: 8px; padding: 14px 16px; font-size: 14px; color: #0a2d4a; line-height: 1.7; min-height: 70px; margin: 4px 0; background: #fafcff; }
+    .hd-note-box { border: 1px solid #d4e8f5; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #333; min-height: 50px; background: #fffbeb; border-color: #fde68a; line-height: 1.6; margin: 4px 0; font-family: 'DM Sans', sans-serif; }
+    .hd-footer { margin-top: 36px; display: flex; justify-content: space-between; border-top: 1px dashed #d4e8f5; padding-top: 20px; }
+    .hd-sign { text-align: center; min-width: 160px; }
+    .hd-sign-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; color: #0a2d4a; }
+    .hd-sign-note { font-family: 'DM Sans', sans-serif; font-size: 11px; color: #7a9bb0; margin-top: 2px; }
+    .hd-sign-space { height: 56px; }
+    .hd-sign-name { font-size: 13px; font-weight: 600; border-top: 1px solid #333; padding-top: 4px; display: inline-block; min-width: 120px; }
+
+    /* ── Card border (bao ngoài dashboard) ────────────────────── */
+    .doc-card-wrap { background: #f5faff; border: 1px solid #c8dff0; border-radius: 18px; box-shadow: 0 4px 24px rgba(10,77,124,.08); padding: 28px 28px 24px; }
+
+    /* ── Lịch làm việc ─────────────────────────────────────────── */
+    .sch-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid #d4e8f5; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+    .sch-label { font-size: 11px; font-weight: 600; color: #3a5a72; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+    .sch-date { height: 36px; border: 1px solid #d4e8f5; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #0d2d44; outline: none; font-family: 'DM Sans', sans-serif; }
+    .sch-date:focus { border-color: #1a6fa8; }
+
+    .sch-tbl-wrap { background: #fff; border: 1px solid #d4e8f5; border-radius: 14px; overflow: hidden; }
+    .sch-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .sch-table thead { background: #f0f8ff; }
+    .sch-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: #3a5a72; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #d4e8f5; white-space: nowrap; }
+    .sch-table td { padding: 11px 14px; border-bottom: 1px solid #f0f4f8; color: #0d2d44; vertical-align: middle; }
+    .sch-table tr:last-child td { border-bottom: none; }
+    .sch-table tr:hover td { background: #f8fbff; }
+
+    /* Schedule add modal */
+    .sch-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9990; align-items: center; justify-content: center; overflow-y: auto; }
+    .sch-overlay.open { display: flex; }
+    .sch-modal-box { background: #fff; border-radius: 18px; padding: 28px; width: 560px; max-width: 96vw; margin: 20px auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .sch-modal-title { font-size: 16px; font-weight: 700; color: #0a4d7c; margin-bottom: 4px; }
+    .sch-modal-sub   { font-size: 12px; color: #7a9bb0; margin-bottom: 22px; }
+    .sch-form-section { margin-bottom: 20px; }
+    .sch-section-title { font-size: 11px; font-weight: 700; color: #3a5a72; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #eef3f8; }
+    .sch-form-inp { width: 100%; border: 1.5px solid #d4e8f5; border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; box-sizing: border-box; outline: none; }
+    .sch-form-inp:focus { border-color: #1a6fa8; box-shadow: 0 0 0 3px rgba(26,111,168,.1); }
+    .sch-alert { border-radius: 9px; padding: 10px 14px; font-size: 12px; margin-bottom: 14px; display: none; }
+    .sch-alert-err { background: #fdecea; border: 1px solid #f5c6c6; color: #c0392b; }
+    .sch-alert-ok  { background: #d4edda; border: 1px solid #b8ddc4; color: #155724; }
+    .sch-wd-chip { font-size: 12px; cursor: pointer; border: 1.5px solid #d4e8f5; border-radius: 8px; padding: 5px 11px; user-select: none; transition: all .15s; background: #fff; display: inline-flex; align-items: center; gap: 5px; }
+    .sch-wd-chip.selected { background: #e8f4fd; border-color: #0a4d7c; color: #0a4d7c; font-weight: 600; }
+    .sch-shift-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; background: #f8fbff; border-radius: 8px; padding: 8px 12px; }
+    .sch-time-inp { height: 34px; border: 1.5px solid #d4e8f5; border-radius: 7px; padding: 0 10px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; }
+    .sch-time-inp:focus { border-color: #1a6fa8; }
+    .sch-preview-box { background: #f0f8ff; border: 1px solid #d4e8f5; border-radius: 9px; padding: 12px 16px; font-size: 13px; color: #0a4d7c; display: none; }
+    .sch-modal-footer { display: flex; gap: 10px; margin-top: 22px; }
+    .sch-btn-save   { flex: 2; height: 42px; background: #0a4d7c; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .sch-btn-save:hover { background: #1a6fa8; }
+    .sch-btn-cancel { flex: 1; height: 42px; background: #f0f0f0; color: #555; border: none; border-radius: 10px; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+    /* Articles */
+    .article-card { background: #fff; border: 1px solid #d4e8f5; border-radius: 12px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .article-card:hover { border-color: #1a6fa8; }
+    .article-card-title { font-size: 14px; font-weight: 500; color: #0a4d7c; margin-bottom: 4px; }
+    .article-card-meta  { font-size: 11px; color: #7a9bb0; }
+    .badge-pub   { background: #d4edda; color: #155724; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+    .badge-draft { background: #e2e3e5; color: #383d41; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+
+    /* Editor modal */
+    .editor-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9999; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+    .editor-overlay.open { display: flex; }
+    .editor-box { background: #fff; border-radius: 16px; padding: 28px; width: 720px; max-width: 95vw; margin: auto; }
+    .editor-title-lbl { font-size: 16px; font-weight: 600; color: #0a4d7c; margin-bottom: 20px; }
+    .editor-form-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .editor-form-group { flex: 1; min-width: 200px; }
+    .editor-label { font-size: 11px; font-weight: 500; color: #3a5a72; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 5px; }
+    .editor-input { width: 100%; border: 1px solid #d4e8f5; border-radius: 8px; padding: 8px 12px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; box-sizing: border-box; height: 38px; }
+    .editor-input:focus { border-color: #1a6fa8; }
+    textarea.editor-input { height: auto; min-height: 80px; resize: vertical; }
+    #artContent { min-height: 200px; }
+    .editor-footer { display: flex; gap: 10px; margin-top: 20px; }
+
+    /* ── Nút kê đơn thuốc ──────────────────────────────────────── */
+    .btn-prescription {
+        height: 32px; padding: 0 14px;
+        background: #e8f5e9; color: #1b5e20;
+        border: 1px solid #a5d6a7; border-radius: 8px;
+        font-size: 12px; font-weight: 500; cursor: pointer;
+        font-family: 'DM Sans', sans-serif; white-space: nowrap; transition: all .15s;
+    }
+    .btn-prescription:hover { background: #2d7a52; color: #fff; border-color: #2d7a52; }
+
+    /* ── Modal đơn thuốc ────────────────────────────────────────── */
+    .rx-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 9998; align-items: flex-start; justify-content: center; padding: 20px 16px; overflow-y: auto; backdrop-filter: blur(2px); }
+    .rx-overlay.open { display: flex; }
+    .rx-box { background: #fff; border-radius: 18px; width: 680px; max-width: 96vw; margin: auto; box-shadow: 0 24px 64px rgba(0,0,0,.22); overflow: hidden; }
+    .rx-head { background: linear-gradient(135deg, #1b5e20, #2d7a52); padding: 20px 24px; display: flex; align-items: center; gap: 12px; }
+    .rx-head-icon { width: 40px; height: 40px; background: rgba(255,255,255,.18); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .rx-head-title { color: #fff; font-size: 16px; font-weight: 700; }
+    .rx-head-sub { color: rgba(255,255,255,.75); font-size: 12px; margin-top: 2px; }
+    .rx-body { padding: 20px 24px; }
+    .rx-patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; background: #f5faff; border: 1px solid #d4e8f5; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+    .rx-info-lbl { font-size: 11px; color: #7a9bb0; text-transform: uppercase; letter-spacing: .04em; font-weight: 500; display: block; margin-bottom: 2px; }
+    .rx-info-val { font-size: 12px; font-weight: 600; color: #0d2d44; }
+    .rx-diag-box { background: #f0faf4; border-left: 3px solid #2d7a52; padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 12px; color: #1b5e20; margin-bottom: 16px; }
+    .rx-section-lbl { font-size: 11px; font-weight: 700; color: #3a5a72; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .rx-items-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12px; }
+    .rx-items-table thead { background: #f0f8ff; }
+    .rx-items-table th { padding: 7px 8px; text-align: left; font-size: 11px; font-weight: 600; color: #3a5a72; border-bottom: 1px solid #d4e8f5; }
+    .rx-items-table td { padding: 6px 8px; border-bottom: 1px solid #f0f4f8; vertical-align: top; }
+    .rx-items-table tr:last-child td { border-bottom: none; }
+    .rx-item-inp { width: 100%; border: 1px solid #d4e8f5; border-radius: 6px; padding: 5px 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; box-sizing: border-box; }
+    .rx-item-inp:focus { border-color: #2d7a52; }
+    .rx-item-num { width: 100%; border: 1px solid #d4e8f5; border-radius: 6px; padding: 5px 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; box-sizing: border-box; text-align: center; }
+    .rx-item-num:focus { border-color: #2d7a52; }
+    .rx-del-btn { background: #fdecea; color: #c0392b; border: 1px solid #f5c6c6; border-radius: 5px; width: 26px; height: 26px; cursor: pointer; font-size: 14px; }
+    .rx-notes-inp { width: 100%; border: 1.5px solid #d4e8f5; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; resize: vertical; min-height: 60px; box-sizing: border-box; }
+    .rx-notes-inp:focus { border-color: #2d7a52; }
+    .rx-footer { padding: 14px 24px; border-top: 1px solid #eef3f8; display: flex; gap: 8px; justify-content: flex-end; background: #fafcff; flex-wrap: wrap; }
+    .rx-msg { font-size: 12px; margin-right: auto; align-self: center; }
+    .rx-msg.ok  { color: #2d7a52; }
+    .rx-msg.err { color: #c0392b; }
+    .rx-btn-cancel { height: 36px; padding: 0 16px; background: #f0f0f0; color: #555; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .rx-btn-save   { height: 36px; padding: 0 18px; background: #2d7a52; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .rx-btn-save:hover { background: #1b5e20; }
+    .rx-btn-print  { height: 36px; padding: 0 18px; background: #c9a227; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .rx-btn-print:hover { background: #a8841e; }
+
+    /* ── Nút in phiếu (bác sĩ) ────────────────────────────────── */
+    .btn-print-phieu {
+        height: 30px; padding: 0 12px;
+        background: #c9a227; color: #fff;
+        border: none; border-radius: 7px; font-size: 12px;
+        font-weight: 500; cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        white-space: nowrap; transition: background .15s;
+    }
+    .btn-print-phieu:hover { background: #a8841e; }
+
+    /* ── Modal phiếu khám bệnh ─────────────────────────────────── */
+    .phieu-modal-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,.55); z-index: 9999;
+        align-items: flex-start; justify-content: center;
+        overflow-y: auto; padding: 24px 16px;
+        backdrop-filter: blur(3px);
+    }
+    .phieu-modal-overlay.open { display: flex; }
+
+    .phieu-controls {
+        display: flex; gap: 10px; justify-content: flex-end;
+        max-width: 680px; margin: 0 auto 12px;
+    }
+    .phieu-btn-print {
+        height: 38px; padding: 0 20px;
+        background: #0a4d7c; color: #fff;
+        border: none; border-radius: 9px; font-size: 13px;
+        cursor: pointer; font-family: 'DM Sans', sans-serif;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .phieu-btn-close {
+        height: 38px; padding: 0 18px;
+        background: rgba(255,255,255,.9); color: #555;
+        border: none; border-radius: 9px; font-size: 13px;
+        cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+
+    /* Tờ phiếu kiểu giấy tờ y tế */
+    .phieu-sheet {
+        background: #fff;
+        width: 680px; max-width: 100%;
+        border-radius: 4px;
+        padding: 36px 44px;
+        font-family: 'Times New Roman', Times, serif;
+        margin: 0 auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,.25);
+        border: 1px solid #ccc;
+        position: relative;
+    }
+
+    /* Quốc hiệu */
+    .phieu-quochieu {
+        text-align: center;
+        margin-bottom: 18px;
+    }
+    .phieu-quochieu-top {
+        font-size: 13px; font-weight: bold;
+        text-transform: uppercase; letter-spacing: .04em;
+    }
+    .phieu-quochieu-sub {
+        font-size: 13px; font-weight: bold;
+        margin-top: 2px;
+    }
+    .phieu-quochieu-doc {
+        font-size: 12px; font-style: italic;
+        border-bottom: 1px solid #333;
+        display: inline-block;
+        padding-bottom: 2px;
+        margin-top: 2px;
+    }
+
+    /* Header 2 cột */
+    .phieu-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1.5px solid #333;
+        padding-bottom: 14px;
+        margin-bottom: 18px;
+    }
+    .phieu-benh-vien {
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        line-height: 1.5;
+    }
+    .phieu-benh-vien-sub {
+        font-size: 11px;
+        font-weight: normal;
+        text-transform: none;
+        color: #333;
+        margin-top: 3px;
+        line-height: 1.5;
+    }
+
+    /* Tên phiếu */
+    .phieu-ten {
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        margin-bottom: 20px;
+    }
+
+    /* Các dòng thông tin kiểu gạch chân */
+    .phieu-line {
+        font-size: 13px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: baseline;
+        gap: 0;
+        line-height: 1.8;
+    }
+    .phieu-line-label {
+        flex-shrink: 0;
+        font-weight: normal;
+    }
+    .phieu-line-value {
+        flex: 1;
+        border-bottom: 1px solid #333;
+        min-width: 60px;
+        padding: 0 4px;
+        font-weight: 500;
+    }
+    .phieu-line-unit {
+        flex-shrink: 0;
+        margin-left: 6px;
+    }
+
+    /* Dòng inline (cùng hàng nhiều field) */
+    .phieu-line-inline {
+        font-size: 13px;
+        margin-bottom: 10px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        line-height: 1.8;
+    }
+    .phieu-inline-seg {
+        display: flex;
+        align-items: baseline;
+        gap: 0;
+        flex: 1;
+        min-width: 120px;
+    }
+
+    /* Phần chuẩn đoán */
+    .phieu-chandoan-box {
+        border: 1.5px solid #333;
+        border-radius: 2px;
+        min-height: 60px;
+        padding: 8px 12px;
+        font-size: 13px;
+        line-height: 1.7;
+        margin-top: 4px;
+        margin-bottom: 14px;
+        color: #0a2d4a;
+        font-weight: 500;
+    }
+
+    /* Chữ ký */
+    .phieu-chukybottom {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 28px;
+    }
+    .phieu-chuky-col {
+        text-align: center;
+        min-width: 150px;
+    }
+    .phieu-chuky-title {
+        font-size: 13px; font-weight: bold;
+        text-transform: uppercase;
+    }
+    .phieu-chuky-note {
+        font-size: 11px; font-style: italic;
+        color: #555; margin-top: 2px;
+    }
+    .phieu-chuky-space { height: 64px; }
+    .phieu-chuky-name {
+        font-size: 13px; font-weight: bold;
+        border-top: 1px solid #333;
+        padding-top: 4px;
+        display: inline-block;
+        min-width: 130px;
+    }
+
+    /* Ngày tháng bên phải */
+    .phieu-ngay {
+        text-align: right;
+        font-size: 12px;
+        font-style: italic;
+        margin-bottom: 4px;
+    }
+
+    @@media print {
+        body * { visibility: hidden; }
+        .phieu-sheet, .phieu-sheet * { visibility: visible; }
+        .phieu-sheet {
+            position: fixed; left: 0; top: 0;
+            width: 100%; padding: 20px 32px;
+            border-radius: 0; box-shadow: none; border: none;
+        }
+        .phieu-controls { display: none !important; }
+    }
+</style>
+}
+
+<div class="doc-wrap">
+  <div class="doc-card-wrap">
+    <div class="page-header">
+        <div>
+            <div class="page-title">🩺 Dashboard bác sĩ</div>
+            <div class="page-sub">BS. @ViewBag.UserName — Phòng khám Tai Mũi Họng</div>
+        </div>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div class="sub-tab-bar">
+        <button class="sub-tab-btn active" onclick="showDocTab('schedule', this)">📅 Lịch khám</button>
+        <button class="sub-tab-btn" onclick="showDocTab('mySchedules', this)">🗓 Lịch làm việc</button>
+        @* <button class="sub-tab-btn" onclick="showDocTab('articles', this)">📝 Bài viết y tế</button> *@
+    </div>
+
+    <!-- ── Panel: Lịch khám ─────────────────────────────────────── -->
+    <div id="panelSchedule">
+        <div class="toolbar">
+            <label>Ngày khám</label>
+            <input type="date" id="filterDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            <button class="btn-load" onclick="loadSchedule()">Xem lịch</button>
+            <span style="margin-left:auto;font-size:13px;color:#7a9bb0;">@ViewBag.TodayDate</span>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-num" id="statTotal">@Model.Count</div>
+                <div class="stat-lbl">Tổng lịch</div>
+            </div>
+            <div class="stat-card den">
+                <div class="stat-num" id="statDen">@Model.Count(a => a.Status == "DaDen")</div>
+                <div class="stat-lbl">Đã đến — chờ khám</div>
+            </div>
+            <div class="stat-card kham">
+                <div class="stat-num" id="statKham">@Model.Count(a => a.Status == "DangKham")</div>
+                <div class="stat-lbl">Đang khám</div>
+            </div>
+            <div class="stat-card hoan">
+                <div class="stat-num" id="statHoan">@Model.Count(a => a.Status == "HoanThanh")</div>
+                <div class="stat-lbl">Hoàn thành</div>
+            </div>
+        </div>
+
+        <div class="patient-list" id="patientList">
+            @if (!Model.Any())
+            {
+                <div class="empty-state">Không có lịch khám nào hôm nay</div>
+            }
+            else
+            {
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    var a = Model[i];
+                    var badgeClass = a.Status switch {
+                        "DaDen"     => "badge-den",
+                        "DangKham"  => "badge-kham",
+                        "HoanThanh" => "badge-hoan",
+                        "VangMat"   => "badge-vang",
+                        "DaHuy"     => "badge-huy",
+                        _           => "badge-cho"
+                    };
+                    var cardClass = a.Status switch {
+                        "DaDen"     => "card-waiting",
+                        "DangKham"  => "card-started",
+                        "HoanThanh" => "card-done",
+                        "DaHuy" or "VangMat" => "card-inactive",
+                        _           => ""
+                    };
+                    var avatarClass = a.Status switch {
+                        "DaDen"     => "pc-av-den",
+                        "DangKham"  => "pc-av-kham",
+                        "HoanThanh" => "pc-av-hoan",
+                        "DaHuy" or "VangMat" => "pc-av-huy",
+                        _           => "pc-av-cho"
+                    };
+                    var nameParts = (a.PatientName ?? "?").Trim().Split(new char[]{' '}, StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length >= 2
+                        ? $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[nameParts.Length - 1][0])}"
+                        : (nameParts.Length == 1 && nameParts[0].Length > 0 ? $"{char.ToUpper(nameParts[0][0])}" : "?");
+
+                    <div class="patient-card @cardClass" id="card-@a.Id">
+                        <div class="pc-avatar @avatarClass">@initials</div>
+                        <div class="patient-info">
+                            <div class="pc-header">
+                                <div class="patient-name">@a.PatientName</div>
+                                <span class="badge @badgeClass" id="badge-@a.Id">@a.StatusDisplay</span>
+                            </div>
+                            <div class="patient-meta">
+                                <span class="pc-time-pill">⏰ @a.StartTime – @a.EndTime</span>
+                                <span class="booking-code">@a.BookingCode</span>
+                                @if (a.IsReturn)
+                                {
+                                    <span class="badge-taikham">♻ Tái khám</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-khamoi">🆕 Khám mới</span>
+                                }
+                            </div>
+                            @if (a.IsReturn)
+                            {
+                                <div style="margin-bottom:8px;">
+                                    <button class="btn-history"
+                                        onclick="openHistory(@a.PatientId, @a.DoctorId, '@Html.Raw(a.PatientName)')">
+                                        📂 Xem lịch sử khám trước
+                                    </button>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(a.Note))
+                            {
+                                <div class="patient-note">📋 @a.Note</div>
+                            }
+                            @if (!string.IsNullOrEmpty(a.Diagnosis))
+                            {
+                                <div class="diag-existing" id="diagExisting-@a.Id">🩺 <strong>Chuẩn đoán:</strong> @a.Diagnosis</div>
+                            }
+                            else
+                            {
+                                <div class="diag-existing" id="diagExisting-@a.Id" style="display:none;"></div>
+                            }
+                        </div>
+
+                        <!-- Thao tác bác sĩ theo đúng vòng đời -->
+                        <div class="patient-actions">
+                            @if (a.Status == "DaDen")
+                            {
+                                <button class="btn-action btn-start" onclick="startExam(@a.Id)">▶ Bắt đầu khám</button>
+                            }
+                            @if (a.Status == "DangKham")
+                            {
+                                <button class="btn-action btn-diag" onclick="openDiag(@a.Id)">📋 Ghi chuẩn đoán</button>
+                                <button class="btn-action btn-prescription" onclick="openRx(@a.Id)">💊 Kê đơn thuốc</button>
+                                <button class="btn-action btn-done" onclick="finishExam(@a.Id)">✅ Hoàn thành</button>
+                            }
+                            @if (a.Status == "ChoXacNhan" || a.Status == "DaXacNhan")
+                            {
+                                <span class="lbl-staff">⏳ Chờ lễ tân check-in</span>
+                            }
+                            @if (a.Status == "HoanThanh")
+                            {
+                                <button class="btn-action btn-diag" onclick="openDiag(@a.Id)" style="background:#e8f4fd;color:#0a4d7c;border-color:#b8d8f0;">📋 Sửa chuẩn đoán</button>
+                                <button class="btn-action btn-prescription" onclick="openRx(@a.Id)">💊 Đơn thuốc</button>
+                                <button class="btn-action btn-print-phieu" onclick='openDonThuoc(@a.Id)'>🖨 In đơn thuốc</button>
+                            }
+                            @if (a.Status == "DaHuy")
+                            {
+                                <span style="font-size:11px;color:#721c24;background:#f8d7da;padding:4px 10px;border-radius:10px;border:1px solid #f5c6c6;">❌ Đã hủy</span>
+                            }
+                            @if (a.Status == "VangMat")
+                            {
+                                <span style="font-size:11px;color:#a32d2d;background:#fdecea;padding:4px 10px;border-radius:10px;border:1px solid #f5c6c6;">🚫 Vắng mặt</span>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- ── Panel: Lịch làm việc ─────────────────────────────────── -->
+    <div id="panelMySchedules" style="display:none;">
+        <div class="sch-toolbar">
+            <span class="sch-label">Từ ngày</span>
+            <input type="date" class="sch-date" id="schViewFrom" />
+            <span class="sch-label">Đến ngày</span>
+            <input type="date" class="sch-date" id="schViewTo" />
+            <button class="btn-load" onclick="loadMySchedules()">Xem lịch</button>
+             @* <button class="btn-load" onclick="openDocAddSchedule()" style="margin-left:auto;background:#2d7a52;">+ Thêm lịch</button> *@
+        </div> 
+        <div class="sch-tbl-wrap">
+            <div id="mySchTable"><div class="empty-state">Đang tải...</div></div>
+        </div>
+    </div>
+
+    <!-- ── Panel: Bài viết ─────────────────────────────────────── -->
+@*     <div id="panelArticles" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-size:14px;font-weight:500;color:#0a4d7c;">Bài viết của tôi</div>
+            <button onclick="openEditor(null)" class="btn-load">+ Viết bài mới</button>
+        </div>
+        <div id="articleList">
+            <div class="empty-state">Đang tải...</div>
+        </div>
+    </div>
+  </div><!-- /doc-card-wrap -->
+</div> *@
+
+<!-- ── Modal Thêm lịch làm việc (Bác sĩ) ──────────────────────── -->
+<div class="sch-overlay" id="docSchModal" onclick="if(event.target===this)closeDocAddSchedule()">
+    <div class="sch-modal-box">
+        <div class="sch-modal-title">📅 Thêm lịch làm việc</div>
+        <div class="sch-modal-sub">Tạo lịch làm việc theo ngày, theo thứ và theo ca</div>
+        <div class="sch-alert sch-alert-err" id="docSchErr"></div>
+        <div class="sch-alert sch-alert-ok"  id="docSchOk"></div>
+
+        <!-- Khoảng ngày -->
+        <div class="sch-form-section">
+            <div class="sch-section-title">1. Khoảng thời gian</div>
+            <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:140px;">
+                    <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Từ ngày</div>
+                    <input type="date" id="docSchFrom" class="sch-form-inp" style="height:38px;" />
+                </div>
+                <div style="flex:1;min-width:140px;">
+                    <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Đến ngày</div>
+                    <input type="date" id="docSchTo" class="sch-form-inp" style="height:38px;" />
+                </div>
+            </div>
+            <div style="font-size:11px;color:#7a9bb0;margin-bottom:8px;font-weight:600;">Áp dụng cho các thứ:</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;" id="docWdContainer"></div>
+            <div style="display:flex;gap:7px;margin-top:6px;">
+                <button onclick="docSelectWD([1,2,3,4,5])"     style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#3a5a72;">T2–T6</button>
+                <button onclick="docSelectWD([1,2,3,4,5,6])"   style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#3a5a72;">T2–T7</button>
+                <button onclick="docSelectWD([0,1,2,3,4,5,6])" style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#3a5a72;">Cả tuần</button>
+                <button onclick="docSelectWD([])"               style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#7a9bb0;">Bỏ chọn</button>
+            </div>
+        </div>
+
+        <!-- Ca làm việc -->
+        <div class="sch-form-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;" class="sch-section-title">
+                <span>2. Ca làm việc</span>
+                <button onclick="docAddShift()" style="height:26px;padding:0 11px;background:#0a4d7c;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">+ Thêm ca</button>
+            </div>
+            <div id="docShiftList"></div>
+        </div>
+
+        <!-- Số bệnh nhân -->
+        <div class="sch-form-section">
+            <div class="sch-section-title">3. Số bệnh nhân tối đa / ca</div>
+            <input type="number" id="docSchMax" value="10" min="1" max="50" class="sch-form-inp" style="width:120px;height:38px;" />
+        </div>
+
+        <!-- Preview -->
+        <div class="sch-preview-box" id="docSchPreview"></div>
+
+        <div class="sch-modal-footer">
+            <button class="sch-btn-cancel" onclick="closeDocAddSchedule()">Huỷ</button>
+            <button class="sch-btn-save" id="docSchSave" onclick="saveDocSchedule()">✅ Tạo lịch</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal Editor ─────────────────────────────────────────── -->
+<div class="editor-overlay" id="editorModal" onclick="if(event.target===this)closeEditor()">
+    <div class="editor-box">
+        <div class="editor-title-lbl" id="editorTitleLabel">Viết bài mới</div>
+
+        <div id="editorErr" style="background:#fdecea;border:1px solid #f5c6c6;border-radius:8px;padding:10px 14px;margin-bottom:12px;color:#c0392b;font-size:12px;display:none;"></div>
+        <div id="editorOk"  style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 14px;margin-bottom:12px;color:#2d7a52;font-size:12px;display:none;"></div>
+
+        <div class="editor-form-row">
+            <div style="flex:1;">
+                <label class="editor-label">Tiêu đề *</label>
+                <input class="editor-input" id="artTitle" placeholder="Tiêu đề bài viết..." />
+            </div>
+        </div>
+
+        <div class="editor-form-row">
+            <div class="editor-form-group">
+                <label class="editor-label">Chủ đề *</label>
+                <select class="editor-input" id="artCategory">
+                    <option value="">-- Chọn chủ đề --</option>
+                    <option>Viêm xoang</option>
+                    <option>Thính học</option>
+                    <option>Hồng — Thanh quản</option>
+                    <option>TMH Nhi</option>
+                    <option>Phẫu thuật nội soi</option>
+                    <option>Phòng ngừa</option>
+                    <option>Khác</option>
+                </select>
+            </div>
+            <div class="editor-form-group">
+                <label class="editor-label">Ảnh thumbnail</label>
+                <div style="border:1.5px dashed #d4e8f5;border-radius:8px;padding:10px;text-align:center;cursor:pointer;background:#fafcff;" onclick="document.getElementById('artImageFile').click()">
+                    <img id="thumbPreview" src="" alt="" style="max-width:100%;max-height:100px;border-radius:6px;display:none;margin-bottom:6px;" />
+                    <div id="thumbPlaceholder" style="font-size:12px;color:#7a9bb0;padding:6px 0;">
+                        🖼 Bấm để chọn ảnh<br><small>JPG, PNG, WebP — tối đa 5MB</small>
+                    </div>
+                    <input type="file" id="artImageFile" accept="image/*" style="display:none" onchange="previewAndUpload(this)" />
+                </div>
+                <input type="hidden" id="artThumbnail" />
+                <div id="uploadProgress" style="font-size:11px;color:#7a9bb0;margin-top:4px;display:none;">Đang tải lên...</div>
+                <div id="uploadErr" style="font-size:11px;color:#c0392b;margin-top:4px;display:none;"></div>
+            </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+            <label class="editor-label">Tóm tắt *</label>
+            <textarea class="editor-input" id="artSummary" rows="3"
+                placeholder="Mô tả ngắn gọn nội dung bài viết (1–2 câu)..."></textarea>
+        </div>
+
+        <div style="margin-bottom:20px;">
+            <label class="editor-label">Nội dung *</label>
+            <textarea class="editor-input" id="artContent"
+                placeholder="Viết nội dung bài viết đầy đủ tại đây..."></textarea>
+        </div>
+
+        <div class="editor-footer">
+            <button onclick="closeEditor()"
+                style="flex:1;height:40px;background:#f5f5f5;color:#555;border:none;border-radius:9px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Huỷ</button>
+            <button id="saveDraftBtn" onclick="saveArticle(false)"
+                style="flex:1;height:40px;background:#e2e3e5;color:#383d41;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">Lưu nháp</button>
+            <button id="savePublishBtn" onclick="saveArticle(true)"
+                style="flex:2;height:40px;background:#0a4d7c;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">Đăng bài</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ── Modal Ghi Chuẩn Đoán ────────────────────────────────────── -->
+<div class="diag-overlay" id="diagOverlay" onclick="if(event.target===this)closeDiagModal()">
+    <div class="diag-modal">
+        <div class="diag-modal-head">
+            <div class="diag-modal-icon">🩺</div>
+            <div>
+                <div class="diag-modal-title">Ghi chuẩn đoán & điều trị</div>
+                <div class="diag-modal-sub" id="diagModalSub">Cập nhật kết quả khám cho bệnh nhân</div>
+            </div>
+        </div>
+        <div class="diag-modal-body">
+            <!-- Thông tin cơ bản (read-only) -->
+            <div class="diag-info-grid">
+                <div class="diag-info-item">
+                    <span class="diag-info-label">👤 Họ tên bệnh nhân</span>
+                    <span class="diag-info-value" id="dModalPatient">—</span>
+                </div>
+                <div class="diag-info-item">
+                    <span class="diag-info-label">📅 Ngày khám</span>
+                    <span class="diag-info-value" id="dModalDate">—</span>
+                </div>
+                <div class="diag-info-item">
+                    <span class="diag-info-label">⏰ Giờ khám</span>
+                    <span class="diag-info-value" id="dModalTime">—</span>
+                </div>
+                <div class="diag-info-item">
+                    <span class="diag-info-label">🏷 Mã lịch</span>
+                    <span class="diag-info-value" id="dModalCode" style="font-family:monospace;color:#1a6fa8;">—</span>
+                </div>
+            </div>
+            <!-- Triệu chứng / ghi chú bệnh nhân -->
+            <div id="dModalSymptomWrap" style="display:none;">
+                <div class="diag-symptom-box">
+                    <span class="diag-symptom-lbl">📋 Triệu chứng / ghi chú bệnh nhân</span>
+                    <div id="dModalSymptom"></div>
+                </div>
+            </div>
+            <!-- Chuẩn đoán -->
+            <div class="diag-field-wrap">
+                <label class="diag-field-label" for="dModalDiag">🔬 Chuẩn đoán</label>
+                <textarea class="diag-textarea" id="dModalDiag" rows="3"
+                    placeholder="Nhập chuẩn đoán của bác sĩ..."></textarea>
+            </div>
+        </div>
+        <div class="diag-modal-footer">
+            <span class="diag-msg" id="dModalMsg"></span>
+            <button class="btn-diag-cancel" onclick="closeDiagModal()">Đóng</button>
+            <button class="btn-diag-save"   id="dModalBtnSave" onclick="saveDiagModal('keep')">💾 Lưu tạm</button>
+            <button class="btn-diag-done"   id="dModalBtnDone" onclick="saveDiagModal('done')">✅ Lưu & Hoàn thành</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal Lịch Sử Khám ──────────────────────────────────────── -->
+<div class="hist-overlay" id="histModal" onclick="if(event.target===this)closeHistory()">
+    <div class="hist-box">
+        <div class="hist-title">📂 Lịch sử khám</div>
+        <div class="hist-sub" id="histSub">Các lần khám đã hoàn thành</div>
+        <div id="histBody"><div class="hist-loading">Đang tải...</div></div>
+        <div class="hist-footer">
+            <button class="btn-hist-close" onclick="closeHistory()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal Chi Tiết Lịch Sử Khám ────────────────────────────── -->
+<div class="hd-overlay" id="histDetailOverlay" onclick="if(event.target===this)closeHistDetail()">
+    <div style="width:100%;max-width:720px;">
+        <div class="hd-ctrl">
+            <button class="hd-ctrl-btn" onclick="closeHistDetail()">✕ Đóng</button>
+        </div>
+        <div class="hd-sheet">
+            <!-- Tiêu đề phòng khám -->
+            <div class="hd-top">
+                <div>
+                    <div class="hd-clinic-name">Phòng Khám Chuyên Khoa Tai Mũi Họng</div>
+                    <div class="hd-clinic-addr">
+                        89 Đường Linh Nam, Hoàng Mai, Hà Nội<br>
+                        Hotline: 1800 5678 &nbsp;|&nbsp; Email: info@pktaimuihong.vn
+                    </div>
+                </div>
+                <div class="hd-logo-box">🏥</div>
+            </div>
+
+            <div class="hd-title-main">Chi tiết kết quả khám bệnh</div>
+            <div class="hd-code-line" id="hd_code"></div>
+
+            <!-- I. Thông tin bệnh nhân -->
+            <div class="hd-section">
+                <div class="hd-section-hd">I. Thông tin bệnh nhân</div>
+                <div class="hd-row"><span class="hd-lbl">Họ và tên:</span><span class="hd-val" id="hd_patient"></span></div>
+                <div class="hd-row"><span class="hd-lbl">Ngày khám:</span><span class="hd-val" id="hd_date"></span></div>
+                <div class="hd-row"><span class="hd-lbl">Giờ khám:</span><span class="hd-val" id="hd_time"></span></div>
+                <div class="hd-row"><span class="hd-lbl">Mã đặt lịch:</span><span class="hd-val" id="hd_booking"></span></div>
+            </div>
+
+            <!-- II. Bác sĩ phụ trách -->
+            <div class="hd-section">
+                <div class="hd-section-hd">II. Bác sĩ phụ trách</div>
+                <div class="hd-row"><span class="hd-lbl">Họ và tên bác sĩ:</span><span class="hd-val" id="hd_doctor"></span></div>
+                <div class="hd-row"><span class="hd-lbl">Chuyên khoa:</span><span class="hd-val" id="hd_specialty"></span></div>
+            </div>
+
+            <!-- III. Ghi chú / Lý do khám (trước chuẩn đoán) -->
+            <div class="hd-section" id="hd_note_section">
+                <div class="hd-section-hd">III. Ghi chú / Lý do khám</div>
+                <div class="hd-note-box" id="hd_note"></div>
+            </div>
+
+            <!-- IV. Kết quả khám & Chẩn đoán -->
+            <div class="hd-section">
+                <div class="hd-section-hd">IV. Kết quả khám & Chẩn đoán</div>
+                <div class="hd-diag-box" id="hd_diagnosis"></div>
+            </div>
+
+            <!-- Chữ ký -->
+            <div class="hd-footer">
+                <div class="hd-sign">
+                    <div class="hd-sign-title">Bệnh nhân</div>
+                    <div class="hd-sign-note">(Ký và ghi rõ họ tên)</div>
+                    <div class="hd-sign-space"></div>
+                    <div class="hd-sign-name" id="hd_patient_sign">&nbsp;</div>
+                </div>
+                <div class="hd-sign">
+                    <div class="hd-sign-note" id="hd_sign_date" style="font-size:12px;color:#333;font-style:italic;min-height:16px;"></div>
+                    <div class="hd-sign-title">Bác sĩ điều trị</div>
+                    <div class="hd-sign-note">(Ký và ghi rõ họ tên)</div>
+                    <div class="hd-sign-space"></div>
+                    <div class="hd-sign-name" id="hd_doctor_sign">&nbsp;</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal Phiếu Khám Bệnh (chỉ bác sĩ) ────────────────────── -->
+<div class="phieu-modal-overlay" id="phieuModal" onclick="if(event.target===this)closePhieu()">
+    <div style="width:100%;max-width:680px;">
+        <div class="phieu-controls">
+            <button class="phieu-btn-close" onclick="closePhieu()">✕ Đóng</button>
+            <button class="phieu-btn-print" onclick="window.print()">🖨 In phiếu</button>
+        </div>
+
+        <div class="phieu-sheet" id="phieuSheet">
+
+            <!-- Quốc hiệu -->
+            <div class="phieu-quochieu">
+                <div class="phieu-quochieu-top">Cộng hòa xã hội chủ nghĩa Việt Nam</div>
+                <div class="phieu-quochieu-doc">Độc lập – Tự do – Hạnh phúc</div>
+            </div>
+
+            <!-- Header phòng khám + quốc hiệu -->
+            <div class="phieu-header-row">
+                <div>
+                    <div class="phieu-benh-vien">Phòng Khám Chuyên Khoa<br>Tai – Mũi – Họng</div>
+                    <div class="phieu-benh-vien-sub">
+                        Địa chỉ: 89 Đường Linh Nam, Hoàng Mai, Hà Nội<br>
+                        Hotline: 1800 5678
+                    </div>
+                </div>
+                <div style="font-size:11px;text-align:right;color:#555;line-height:1.6;">
+                    Số phiếu: <span id="ph_code" style="font-weight:bold;"></span><br>
+                    Ngày khám: <span id="ph_ngaykham"></span>
+                </div>
+            </div>
+
+            <!-- Tên phiếu -->
+            <div class="phieu-ten">Giấy Khám Bệnh</div>
+
+            <!-- Họ tên + tuổi + giới tính -->
+            <div class="phieu-line-inline">
+                <div class="phieu-inline-seg" style="flex:2;">
+                    <span class="phieu-line-label">– Họ tên người bệnh:&nbsp;</span>
+                    <span class="phieu-line-value" id="ph_hoten"></span>
+                </div>
+                <div class="phieu-inline-seg" style="flex:0 0 auto;min-width:80px;">
+                    <span class="phieu-line-label">&nbsp;Nam/Nữ</span>
+                </div>
+            </div>
+
+            <!-- Mã đặt lịch -->
+            <div class="phieu-line">
+                <span class="phieu-line-label">– Mã đặt lịch:&nbsp;</span>
+                <span class="phieu-line-value" id="ph_malich"></span>
+            </div>
+
+            <!-- Bác sĩ phụ trách -->
+            <div class="phieu-line">
+                <span class="phieu-line-label">– Bác sĩ phụ trách:&nbsp;</span>
+                <span class="phieu-line-value" id="ph_bacsi"></span>
+                <span class="phieu-line-unit">&nbsp;–&nbsp;</span>
+                <span class="phieu-line-value" id="ph_chuyenkhoa" style="min-width:80px;"></span>
+            </div>
+
+            <!-- Vào khám lúc -->
+            <div class="phieu-line-inline">
+                <div class="phieu-inline-seg">
+                    <span class="phieu-line-label">– Vào khám lúc:&nbsp;</span>
+                    <span class="phieu-line-value" id="ph_giokham" style="max-width:120px;"></span>
+                </div>
+                <div class="phieu-inline-seg">
+                    <span class="phieu-line-label">&nbsp;ngày&nbsp;</span>
+                    <span class="phieu-line-value" id="ph_ngay" style="max-width:30px;"></span>
+                    <span class="phieu-line-label">&nbsp;tháng&nbsp;</span>
+                    <span class="phieu-line-value" id="ph_thang" style="max-width:30px;"></span>
+                    <span class="phieu-line-label">&nbsp;năm&nbsp;</span>
+                    <span class="phieu-line-value" id="ph_nam" style="max-width:50px;"></span>
+                </div>
+            </div>
+
+            <!-- Ghi chú của bệnh nhân -->
+            <div class="phieu-line">
+                <span class="phieu-line-label">– Lý do khám:&nbsp;</span>
+                <span class="phieu-line-value" id="ph_ghichu"></span>
+            </div>
+
+            <!-- Chuẩn đoán -->
+            <div style="font-size:13px;font-weight:bold;margin:14px 0 4px;">– Chuẩn đoán:</div>
+            <div class="phieu-chandoan-box" id="ph_chandoan"></div>
+
+            <!-- Ngày ký -->
+            <div class="phieu-ngay" id="ph_ngayky"></div>
+
+            <!-- Chữ ký -->
+            <div class="phieu-chukybottom">
+                <div class="phieu-chuky-col">
+                    <div class="phieu-chuky-title">Trưởng khoa điều trị</div>
+                    <div class="phieu-chuky-note">(Ký, ghi rõ họ tên)</div>
+                    <div class="phieu-chuky-space"></div>
+                    <div class="phieu-chuky-name">&nbsp;</div>
+                </div>
+                <div class="phieu-chuky-col">
+                    <div class="phieu-chuky-title">Bác sĩ điều trị</div>
+                    <div class="phieu-chuky-note">(Ký, ghi rõ họ tên)</div>
+                    <div class="phieu-chuky-space"></div>
+                    <div class="phieu-chuky-name" id="ph_bsSign"></div>
+                </div>
+            </div>
+
+        </div><!-- /phieu-sheet -->
+    </div>
+</div>
+
+<!-- ── Modal Đơn Thuốc ─────────────────────────────────────────── -->
+<div class="rx-overlay" id="rxOverlay" onclick="if(event.target===this)closeRx()">
+    <div class="rx-box">
+        <div class="rx-head">
+            <div class="rx-head-icon">💊</div>
+            <div>
+                <div class="rx-head-title">Kê đơn thuốc</div>
+                <div class="rx-head-sub" id="rxHeadSub">Nhập danh sách thuốc cho bệnh nhân</div>
+            </div>
+        </div>
+        <div class="rx-body">
+            <!-- Thông tin bệnh nhân (read-only) -->
+            <div class="rx-patient-info">
+                <div><span class="rx-info-lbl">👤 Bệnh nhân</span><span class="rx-info-val" id="rxPatientName">—</span></div>
+                <div><span class="rx-info-lbl">🏷 Mã lịch</span><span class="rx-info-val" id="rxBookingCode">—</span></div>
+                <div><span class="rx-info-lbl">📅 Ngày khám</span><span class="rx-info-val" id="rxWorkDate">—</span></div>
+                <div><span class="rx-info-lbl">🔬 Chuẩn đoán</span><span class="rx-info-val" id="rxDiagnosis">—</span></div>
+            </div>
+
+            <!-- Danh sách thuốc -->
+            <div class="rx-section-lbl">
+                💊 Danh sách thuốc
+                <button onclick="rxAddRow()" style="height:28px;padding:0 12px;background:#2d7a52;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">+ Thêm thuốc</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="rx-items-table">
+                    <thead>
+                        <tr>
+                            <th>Tên thuốc *</th>
+                            <th>Liều lượng *</th>
+                            <th>Tần suất *</th>
+                            <th style="width:60px;">Số ngày</th>
+                            <th style="width:60px;">Số lượng</th>
+                            <th>Cách dùng</th>
+                            <th style="width:30px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rxItemsBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Ghi chú tổng -->
+            <div style="margin-top:12px;">
+                <div class="rx-section-lbl">📝 Lời dặn / Ghi chú tổng</div>
+                <textarea class="rx-notes-inp" id="rxNotes" placeholder="VD: Uống thuốc đúng giờ, tái khám sau 7 ngày nếu không đỡ..."></textarea>
+            </div>
+        </div>
+        <div class="rx-footer">
+            <span class="rx-msg" id="rxMsg"></span>
+            <button class="rx-btn-cancel" onclick="closeRx()">Đóng</button>
+            <button class="rx-btn-print" id="rxBtnPrint" onclick="rxPrint()" style="display:none;">🖨 In đơn thuốc</button>
+            <button class="rx-btn-save" onclick="saveRx()">💾 Lưu đơn thuốc</button>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+    // Khởi tạo allCards từ server-side model (dùng cho openDiag trên static cards)
+    var allCards = {};
+    (function() {
+        var _init = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.Select(a => new {
+                id            = a.Id,
+                patientId     = a.PatientId,
+                patientName   = a.PatientName,
+                doctorId      = a.DoctorId,
+                doctorName    = a.DoctorName,
+                bookingCode   = a.BookingCode,
+                workDate      = a.WorkDate,
+                startTime     = a.StartTime,
+                endTime       = a.EndTime,
+                status        = a.Status,
+                statusDisplay = a.StatusDisplay,
+                note          = a.Note,
+                diagnosis     = a.Diagnosis,
+                isReturn      = a.IsReturn
+            }).ToList()
+        ));
+        _init.forEach(function(a) { allCards[a.id] = a; });
+    })();
+
+    // ── Sub-tab switching ─────────────────────────────────────────────
+    var schViewLoaded = false;
+    function showDocTab(name, btn) {
+        document.getElementById('panelSchedule').style.display   = name === 'schedule'    ? '' : 'none';
+        document.getElementById('panelMySchedules').style.display = name === 'mySchedules' ? '' : 'none';
+        document.getElementById('panelArticles').style.display   = name === 'articles'    ? '' : 'none';
+        document.querySelectorAll('.sub-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        if (name === 'articles'    && !articlesLoaded) { articlesLoaded = true; loadMyArticles(); }
+        if (name === 'mySchedules') { initSchView(); }
+    }
+
+    // ── Lịch làm việc: khởi tạo view ─────────────────────────────────
+    function initSchView() {
+        var today = new Date();
+        var endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        document.getElementById('schViewFrom').value = today.toISOString().split('T')[0];
+        document.getElementById('schViewTo').value   = endOfMonth.toISOString().split('T')[0];
+        loadMySchedules();
+    }
+
+    function loadMySchedules() {
+        var from = document.getElementById('schViewFrom').value;
+        var to   = document.getElementById('schViewTo').value;
+        var url  = '/Doctor/GetMySchedules?';
+        if (from) url += 'from=' + from + '&';
+        if (to)   url += 'to=' + to + '&';
+        document.getElementById('mySchTable').innerHTML = '<div class="empty-state">Đang tải...</div>';
+        fetch(url.replace(/[?&]$/, ''))
+            .then(function(r) { return r.json(); })
+            .then(function(data) { renderMySchedules(data); })
+            .catch(function() { document.getElementById('mySchTable').innerHTML = '<div class="empty-state">Lỗi kết nối. Vui lòng thử lại.</div>'; });
+    }
+
+    function renderMySchedules(data) {
+        if (!Array.isArray(data) || !data.length) {
+            document.getElementById('mySchTable').innerHTML = '<div class="empty-state" style="padding:40px;">Chưa có lịch làm việc nào trong khoảng thời gian này. Bấm <strong>+ Thêm lịch</strong> để tạo.</div>';
+            return;
+        }
+        var statusMap = {
+            'DaDuyet':  '<span style="display:inline-flex;align-items:center;gap:4px;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">✅ Đã duyệt</span>',
+            'ChoDuyet': '<span style="display:inline-flex;align-items:center;gap:4px;background:#fff8e1;color:#b8860b;border:1px solid #ffe082;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">⏳ Chờ duyệt</span>',
+            'DaHuy':    '<span style="display:inline-flex;align-items:center;gap:4px;background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">❌ Đã hủy</span>'
+        };
+        var html = '<table class="sch-table"><thead><tr>'
+            + '<th>Ngày làm việc</th><th>Giờ làm</th><th>Đã đặt / Tối đa</th><th>Còn trống</th><th>Trạng thái</th><th></th>'
+            + '</tr></thead><tbody>'
+            + data.map(function(s) {
+                var cur = s.currentPatients || 0;
+                var max = s.maxPatients || 1;
+                var rem = s.remainingSlots !== undefined ? s.remainingSlots : (max - cur);
+                var pct = Math.round(cur / max * 100);
+                var col = pct >= 100 ? '#c0392b' : pct >= 70 ? '#c9a227' : '#2d7a52';
+                var bar = '<div style="background:#e8f0f7;border-radius:5px;height:8px;width:80px;display:inline-block;vertical-align:middle;">'
+                        + '<div style="background:' + col + ';height:8px;border-radius:5px;width:' + Math.min(pct,100) + '%;"></div></div>';
+                var wdate = new Date(s.workDate || s.WorkDate);
+                var dateStr = wdate.toLocaleDateString('vi-VN', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+                var statusHtml = statusMap[s.status || s.Status] || ('<span class="badge badge-cho">' + (s.status || '—') + '</span>');
+                var sid = s.id || s.Id;
+                var canDel = cur === 0;
+                var delBtn = '<button onclick="deleteMySchedule(' + sid + ')" '
+                    + (canDel ? '' : 'disabled title="Đã có bệnh nhân đặt lịch"')
+                    + ' style="height:28px;padding:0 12px;border-radius:6px;border:1px solid ' + (canDel ? '#f5c6c6' : '#e0e0e0') + ';background:' + (canDel ? '#fdecea' : '#f5f5f5') + ';color:' + (canDel ? '#c0392b' : '#bbb') + ';font-size:12px;cursor:' + (canDel ? 'pointer' : 'not-allowed') + ';">Xóa</button>';
+                return '<tr>'
+                    + '<td><strong>' + dateStr + '</strong></td>'
+                    + '<td>' + (s.startTime || s.StartTime) + ' – ' + (s.endTime || s.EndTime) + '</td>'
+                    + '<td>' + bar + ' <span style="font-size:12px;color:#7a9bb0;margin-left:8px;">' + cur + ' / ' + max + '</span></td>'
+                    + '<td><strong style="color:' + col + '">' + rem + '</strong></td>'
+                    + '<td>' + statusHtml + '</td>'
+                    + '<td>' + delBtn + '</td>'
+                    + '</tr>';
+            }).join('')
+            + '</tbody></table>';
+        document.getElementById('mySchTable').innerHTML = html;
+    }
+
+    // ── Modal Thêm lịch làm việc ──────────────────────────────────────
+    var docSelWeekdays = new Set([1,2,3,4,5]);
+    var docShifts = [];
+    var docShiftCnt = 0;
+
+    function openDocAddSchedule() {
+        docSelWeekdays = new Set([1,2,3,4,5]);
+        docShifts = []; docShiftCnt = 0;
+        document.getElementById('docSchErr').style.display = 'none';
+        document.getElementById('docSchOk').style.display  = 'none';
+        document.getElementById('docSchPreview').style.display = 'none';
+        var today = new Date();
+        var d6 = new Date(today); d6.setDate(today.getDate() + 6);
+        document.getElementById('docSchFrom').value = today.toISOString().split('T')[0];
+        document.getElementById('docSchTo').value   = d6.toISOString().split('T')[0];
+        docRenderWDChips();
+        docAddShift('07:00', '11:00');
+        docAddShift('13:00', '17:00');
+        document.getElementById('docSchModal').classList.add('open');
+        docUpdatePreview();
+    }
+    function closeDocAddSchedule() { document.getElementById('docSchModal').classList.remove('open'); }
+
+    function docRenderWDChips() {
+        var days = [{v:1,l:'T2'},{v:2,l:'T3'},{v:3,l:'T4'},{v:4,l:'T5'},{v:5,l:'T6'},{v:6,l:'T7'},{v:0,l:'CN'}];
+        document.getElementById('docWdContainer').innerHTML = days.map(function(d) {
+            return '<div class="sch-wd-chip ' + (docSelWeekdays.has(d.v) ? 'selected' : '') + '" id="dwd-' + d.v + '" onclick="docToggleWD(' + d.v + ')">' + d.l + '</div>';
+        }).join('');
+    }
+    function docToggleWD(v) {
+        if (docSelWeekdays.has(v)) docSelWeekdays.delete(v); else docSelWeekdays.add(v);
+        var el = document.getElementById('dwd-' + v);
+        if (el) el.className = 'sch-wd-chip' + (docSelWeekdays.has(v) ? ' selected' : '');
+        docUpdatePreview();
+    }
+    function docSelectWD(arr) { docSelWeekdays = new Set(arr); docRenderWDChips(); docUpdatePreview(); }
+
+    function docAddShift(s, e) {
+        var id = ++docShiftCnt;
+        docShifts.push({id:id, start: s||'07:00', end: e||'11:00'});
+        docRenderShifts();
+        docUpdatePreview();
+    }
+    function docRemoveShift(id) { docShifts = docShifts.filter(function(s){return s.id!==id;}); docRenderShifts(); docUpdatePreview(); }
+    function docRenderShifts() {
+        if (!docShifts.length) {
+            document.getElementById('docShiftList').innerHTML = '<div style="font-size:12px;color:#7a9bb0;padding:8px 0">Chưa có ca nào.</div>';
+            return;
+        }
+        document.getElementById('docShiftList').innerHTML = docShifts.map(function(s) {
+            return '<div class="sch-shift-row" id="dsr-' + s.id + '">'
+                + '<input type="time" class="sch-time-inp" value="' + s.start + '" onchange="docUpdShift(' + s.id + ',\'start\',this.value)" />'
+                + '<span style="color:#7a9bb0;font-size:13px">–</span>'
+                + '<input type="time" class="sch-time-inp" value="' + s.end + '" onchange="docUpdShift(' + s.id + ',\'end\',this.value)" />'
+                + '<button onclick="docRemoveShift(' + s.id + ')" style="width:30px;height:30px;border-radius:6px;border:1px solid #f5c6c6;background:#fdecea;color:#c0392b;cursor:pointer;font-size:16px;flex-shrink:0;">×</button>'
+                + '</div>';
+        }).join('');
+    }
+    function docUpdShift(id, field, val) { var s = docShifts.find(function(x){return x.id===id;}); if(s) s[field]=val; docUpdatePreview(); }
+
+    function docUpdatePreview() {
+        var from = document.getElementById('docSchFrom').value;
+        var to   = document.getElementById('docSchTo').value;
+        var el   = document.getElementById('docSchPreview');
+        if (!from || !to || !docShifts.length || !docSelWeekdays.size) { el.style.display='none'; return; }
+        var days = 0, d = new Date(from), tod = new Date(to);
+        while (d <= tod) { if (docSelWeekdays.has(d.getDay())) days++; d.setDate(d.getDate()+1); }
+        var total = days * docShifts.length;
+        el.style.display = 'block';
+        el.innerHTML = 'Sẽ tạo tối đa <strong>' + total + ' lịch</strong> — ' + days + ' ngày × ' + docShifts.length + ' ca.';
+    }
+
+    function deleteMySchedule(id) {
+        if (!confirm('Xác nhận xóa lịch làm việc này?')) return;
+        fetch('/Doctor/DeleteMySchedule?id=' + id, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': csrfToken }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success || d.Success) { loadMySchedules(); }
+            else alert(d.message || d.Message || 'Không thể xóa.');
+        })
+        .catch(function() { alert('Lỗi kết nối.'); });
+    }
+
+    function saveDocSchedule() {
+        var from  = document.getElementById('docSchFrom').value;
+        var to    = document.getElementById('docSchTo').value;
+        var max   = parseInt(document.getElementById('docSchMax').value) || 10;
+        var errEl = document.getElementById('docSchErr');
+        errEl.style.display = 'none';
+
+        if (!from || !to)         { errEl.textContent = 'Vui lòng chọn khoảng ngày.';       errEl.style.display='block'; return; }
+        if (!docSelWeekdays.size) { errEl.textContent = 'Vui lòng chọn ít nhất 1 thứ.';    errEl.style.display='block'; return; }
+        if (!docShifts.length)    { errEl.textContent = 'Vui lòng thêm ít nhất 1 ca.';      errEl.style.display='block'; return; }
+        for (var i = 0; i < docShifts.length; i++) {
+            if (docShifts[i].start >= docShifts[i].end) {
+                errEl.textContent = 'Ca ' + (i+1) + ': giờ kết thúc phải sau giờ bắt đầu.';
+                errEl.style.display = 'block'; return;
+            }
+        }
+
+        var btn = document.getElementById('docSchSave');
+        btn.disabled = true; btn.textContent = 'Đang tạo...';
+
+        fetch('/Doctor/CreateMySchedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
+            body: JSON.stringify({
+                fromDate:    from,
+                toDate:      to,
+                weekdays:    Array.from(docSelWeekdays),
+                maxPatients: max,
+                shifts:      docShifts.map(function(s) { return { startTime: s.start + ':00', endTime: s.end + ':00' }; })
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            btn.disabled = false; btn.textContent = '✅ Tạo lịch';
+            if (d.success || d.Success) {
+                document.getElementById('docSchOk').textContent = d.message || d.Message || 'Tạo lịch thành công!';
+                document.getElementById('docSchOk').style.display = 'block';
+                setTimeout(function() { closeDocAddSchedule(); loadMySchedules(); }, 1800);
+            } else {
+                errEl.textContent = d.message || d.Message || 'Có lỗi xảy ra.';
+                errEl.style.display = 'block';
+            }
+        })
+        .catch(function() {
+            btn.disabled = false; btn.textContent = '✅ Tạo lịch';
+            errEl.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
+            errEl.style.display = 'block';
+        });
+    }
+
+    // ── Lịch khám: load theo ngày ────────────────────────────────────
+    function loadSchedule() {
+        var date = document.getElementById('filterDate').value;
+        if (!date) return;
+        fetch('/Doctor/GetAppointments?date=' + date)
+            .then(function(r) { return r.json(); })
+            .then(function(data) { renderCards(data); updateStats(data); })
+            .catch(function() { alert('Lỗi kết nối'); });
+    }
+
+    // Build patient initials from Vietnamese full name (Họ [Đệm] Tên → HT)
+    function ptInitials(name) {
+        var parts = (name || '?').trim().split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return parts.length === 1 ? parts[0][0].toUpperCase() : '?';
+    }
+
+    function renderCards(data) {
+        var list = document.getElementById('patientList');
+        if (!data.length) {
+            list.innerHTML = '<div class="empty-state">Không có lịch khám nào trong ngày này</div>';
+            return;
+        }
+
+        // Ưu tiên: DaDen > DangKham > DaXacNhan > ChoXacNhan > HoanThanh > VangMat > DaHuy > còn lại
+        // Trong cùng nhóm: BookedAt mới hơn lên đầu (ai xác nhận/đến sau thì lên trên)
+        var statusPriority = {
+            'DaDen': 0, 'DangKham': 1, 'DaXacNhan': 2, 'ChoXacNhan': 3,
+            'HoanThanh': 4, 'VangMat': 5, 'DaHuy': 6
+        };
+        data = data.slice().sort(function(a, b) {
+            var pa = statusPriority[a.status] !== undefined ? statusPriority[a.status] : 7;
+            var pb = statusPriority[b.status] !== undefined ? statusPriority[b.status] : 7;
+            if (pa !== pb) return pa - pb;
+            // Cùng nhóm: bookedAt mới hơn lên trước
+            var ta = a.bookedAt ? new Date(a.bookedAt).getTime() : 0;
+            var tb = b.bookedAt ? new Date(b.bookedAt).getTime() : 0;
+            return tb - ta;
+        });
+
+        var badgeMap = {
+            'DaDen': 'badge-den', 'DangKham': 'badge-kham', 'HoanThanh': 'badge-hoan',
+            'VangMat': 'badge-vang', 'DaHuy': 'badge-huy',
+            'ChoXacNhan': 'badge-cho', 'DaXacNhan': 'badge-cho'
+        };
+        var cardMap = {
+            'DaDen': 'card-waiting', 'DangKham': 'card-started',
+            'HoanThanh': 'card-done', 'DaHuy': 'card-inactive', 'VangMat': 'card-inactive'
+        };
+        var avatarMap = {
+            'DaDen': 'pc-av-den', 'DangKham': 'pc-av-kham', 'HoanThanh': 'pc-av-hoan',
+            'DaHuy': 'pc-av-huy', 'VangMat': 'pc-av-huy',
+            'ChoXacNhan': 'pc-av-cho', 'DaXacNhan': 'pc-av-cho'
+        };
+
+        list.innerHTML = data.map(function(a) {
+            var bc  = badgeMap[a.status]  || 'badge-cho';
+            var cc  = cardMap[a.status]   || '';
+            var av  = avatarMap[a.status] || 'pc-av-cho';
+            var ini = ptInitials(a.patientName);
+
+            var visitBadge = a.isReturn
+                ? '<span class="badge-taikham">♻ Tái khám</span>'
+                : '<span class="badge-khamoi">🆕 Khám mới</span>';
+            var histBtn = a.isReturn
+                ? '<div style="margin-bottom:8px;"><button class="btn-history" onclick="openHistory(' + a.patientId + ',' + a.doctorId + ',\'' + escHtml(a.patientName).replace(/'/g, "\\'") + '\')">📂 Xem lịch sử khám trước</button></div>'
+                : '';
+            var noteHtml = a.note
+                ? '<div class="patient-note">📋 ' + escHtml(a.note) + '</div>'
+                : '';
+            var diagExisting = a.diagnosis
+                ? '<div class="diag-existing" id="diagExisting-' + a.id + '">🩺 <strong>Chuẩn đoán:</strong> ' + escHtml(a.diagnosis) + '</div>'
+                : '<div class="diag-existing" id="diagExisting-' + a.id + '" style="display:none;"></div>';
+
+            var actionBtns = buildDoctorActionsAndStore(a);
+
+            return '<div class="patient-card ' + cc + '" id="card-' + a.id + '">' +
+                '<div class="pc-avatar ' + av + '">' + ini + '</div>' +
+                '<div class="patient-info">' +
+                    '<div class="pc-header">' +
+                        '<div class="patient-name">' + escHtml(a.patientName) + '</div>' +
+                        '<span class="badge ' + bc + '" id="badge-' + a.id + '">' + escHtml(a.statusDisplay) + '</span>' +
+                    '</div>' +
+                    '<div class="patient-meta">' +
+                        '<span class="pc-time-pill">⏰ ' + escHtml(a.startTime) + ' – ' + escHtml(a.endTime) + '</span>' +
+                        '<span class="booking-code">' + escHtml(a.bookingCode) + '</span>' +
+                        visitBadge +
+                    '</div>' +
+                    histBtn + noteHtml + diagExisting +
+                '</div>' +
+                '<div class="patient-actions">' + actionBtns + '</div>' +
+                '</div>';
+        }).join('');
+    }
+
+    // ── Thao tác bác sĩ theo đúng vòng đời ──────────────────────────
+    // ChoXacNhan / DaXacNhan → chờ lễ tân check-in, bác sĩ không thao tác
+    // DaDen                  → [Bắt đầu khám] → DangKham
+    // DangKham               → [Ghi chuẩn đoán] + [Hoàn thành] → HoanThanh
+    // HoanThanh              → [Sửa chuẩn đoán] (chỉ cập nhật diagnosis, không đổi status)
+    // DaHuy / VangMat        → không thao tác
+    function buildDoctorActions(a) {
+        var s = a.status;
+        if (s === 'ChoXacNhan' || s === 'DaXacNhan')
+            return '<span class="lbl-staff">⏳ Chờ lễ tân check-in</span>';
+        if (s === 'DaDen')
+            return '<button class="btn-action btn-start" onclick="startExam(' + a.id + ')">▶ Bắt đầu khám</button>';
+        if (s === 'DangKham')
+            return '<button class="btn-action btn-diag" onclick="openDiag(' + a.id + ')">📋 Ghi chuẩn đoán</button>' +
+                   '<button class="btn-action btn-prescription" onclick="openRx(' + a.id + ')">💊 Kê đơn thuốc</button>' +
+                   '<button class="btn-action btn-done" onclick="finishExam(' + a.id + ')">✅ Hoàn thành</button>';
+        if (s === 'HoanThanh')
+            return '<button class="btn-action" style="background:#e8f4fd;color:#0a4d7c;border-color:#b8d8f0;" onclick="openDiag(' + a.id + ')">📋 Sửa chuẩn đoán</button>' +
+                   '<button class="btn-action btn-prescription" onclick="openRx(' + a.id + ')">💊 Đơn thuốc</button>' +
+                   '<button class="btn-action btn-print-phieu" onclick="openDonThuoc(' + a.id + ')">🖨 In đơn thuốc</button>';
+        if (s === 'DaHuy')
+            return '<span style="font-size:11px;color:#721c24;background:#f8d7da;padding:4px 10px;border-radius:10px;border:1px solid #f5c6c6;font-weight:500;">❌ Đã hủy</span>';
+        if (s === 'VangMat')
+            return '<span style="font-size:11px;color:#a32d2d;background:#fdecea;padding:4px 10px;border-radius:10px;border:1px solid #f5c6c6;font-weight:500;">🚫 Vắng mặt</span>';
+        return '<span style="font-size:11px;color:#bbb;">—</span>';
+    }
+
+    // ── Actions bác sĩ ───────────────────────────────────────────────
+    function startExam(id) {
+        // DaDen → DangKham: không cần confirm vì lễ tân đã xác nhận bệnh nhân có mặt
+        postStatus(id, 'DangKham', null, function(ok, msg) {
+            if (ok) loadSchedule();
+            else alert(msg);
+        });
+    }
+
+    function finishExam(id) {
+        if (!confirm('Xác nhận hoàn thành khám cho bệnh nhân này?')) return;
+        postStatus(id, 'HoanThanh', null, function(ok, msg) {
+            if (ok) loadSchedule();
+            else alert(msg);
+        });
+    }
+
+    // ── Modal ghi chuẩn đoán ─────────────────────────────────────
+    var _diagCurrentId     = 0;
+    var _diagCurrentStatus = '';
+
+    function openDiag(id) {
+        var a = allCards[id];
+        if (!a) return;
+
+        _diagCurrentId     = id;
+        _diagCurrentStatus = a.status;
+
+        // Tiêu đề modal
+        document.getElementById('diagModalSub').textContent = a.patientName || a.PatientName || '';
+
+        // Điền thông tin cơ bản
+        document.getElementById('dModalPatient').textContent = a.patientName || a.PatientName || '—';
+        var wd = a.workDate || a.WorkDate;
+        if (wd) {
+            var d = new Date(wd);
+            document.getElementById('dModalDate').textContent = d.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+        } else { document.getElementById('dModalDate').textContent = '—'; }
+        document.getElementById('dModalTime').textContent  = (a.startTime || a.StartTime || '') + ' – ' + (a.endTime || a.EndTime || '');
+        document.getElementById('dModalCode').textContent  = a.bookingCode || a.BookingCode || '—';
+
+        // Triệu chứng
+        var note = a.note || a.Note || '';
+        var symWrap = document.getElementById('dModalSymptomWrap');
+        if (note) {
+            document.getElementById('dModalSymptom').textContent = note;
+            symWrap.style.display = '';
+        } else { symWrap.style.display = 'none'; }
+
+        // Nội dung đã có
+        document.getElementById('dModalDiag').value  = a.diagnosis  || a.Diagnosis  || '';
+        document.getElementById('dModalMsg').textContent = '';
+        document.getElementById('dModalMsg').className   = 'diag-msg';
+
+        // Ẩn/hiện nút Hoàn thành tuỳ trạng thái
+        var btnDone = document.getElementById('dModalBtnDone');
+        var btnSave = document.getElementById('dModalBtnSave');
+        if (a.status === 'HoanThanh') {
+            btnDone.style.display = 'none';
+            btnSave.textContent   = '💾 Lưu cập nhật';
+        } else {
+            btnDone.style.display = '';
+            btnSave.textContent   = '💾 Lưu tạm';
+        }
+
+        document.getElementById('diagOverlay').classList.add('open');
+        setTimeout(function(){ document.getElementById('dModalDiag').focus(); }, 100);
+    }
+
+    function closeDiagModal() {
+        document.getElementById('diagOverlay').classList.remove('open');
+    }
+
+    // Giữ tương thích với các onclick cũ trên static card
+    function closeDiag(id) { closeDiagModal(); }
+
+    function saveDiagModal(action) {
+        var id        = _diagCurrentId;
+        var diagnosis = document.getElementById('dModalDiag').value.trim();
+        var msgEl     = document.getElementById('dModalMsg');
+        var newStatus = (action === 'done') ? 'HoanThanh' : _diagCurrentStatus;
+
+        msgEl.textContent  = '⏳ Đang lưu...';
+        msgEl.className    = 'diag-msg';
+
+        var body = { appointmentId: id, newStatus: newStatus, diagnosis: diagnosis };
+        fetch('/Doctor/SaveDiagnosis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
+            body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                msgEl.textContent = '✅ ' + (data.message || 'Lưu thành công');
+                msgEl.className   = 'diag-msg ok';
+                // Cập nhật nhanh card mà không reload
+                var diagEl = document.getElementById('diagExisting-' + id);
+                if (diagEl) { diagEl.innerHTML = '🩺 <strong>Chuẩn đoán:</strong> ' + escHtml(diagnosis); diagEl.style.display = diagnosis ? '' : 'none'; }
+                setTimeout(function() {
+                    closeDiagModal();
+                    if (action === 'done') loadSchedule();
+                }, 900);
+            } else {
+                msgEl.textContent = '❌ ' + (data.message || 'Lỗi lưu');
+                msgEl.className   = 'diag-msg err';
+            }
+        })
+        .catch(function() {
+            msgEl.textContent = '❌ Lỗi kết nối';
+            msgEl.className   = 'diag-msg err';
+        });
+    }
+
+    // Tương thích cũ (static cards dùng onclick="saveDiag(id,'HoanThanh')")
+    function saveDiag(id, newStatus) {
+        _diagCurrentId     = id;
+        _diagCurrentStatus = newStatus;
+        saveDiagModal(newStatus === 'HoanThanh' ? 'done' : 'keep');
+    }
+
+    function postStatus(id, status, diagnosis, cb) {
+        var body = { appointmentId: id, newStatus: status };
+        if (diagnosis) body.diagnosis = diagnosis;
+        fetch('/Doctor/SaveDiagnosis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
+            body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) { cb(data.success, data.message); })
+        .catch(function() { cb(false, 'Lỗi kết nối'); });
+    }
+
+    function updateStats(data) {
+        document.getElementById('statTotal').textContent = data.length;
+        document.getElementById('statDen').textContent   = data.filter(function(a) { return a.status === 'DaDen'; }).length;
+        document.getElementById('statKham').textContent  = data.filter(function(a) { return a.status === 'DangKham'; }).length;
+        document.getElementById('statHoan').textContent  = data.filter(function(a) { return a.status === 'HoanThanh'; }).length;
+    }
+
+    // ── Lịch sử khám trước (tái khám) ──────────────────────────────
+    var _histData = [];
+
+    function openHistory(patientId, doctorId, patientName) {
+        _histData = [];
+        document.getElementById('histSub').textContent = 'Bệnh nhân: ' + patientName + ' — các lần khám đã hoàn thành';
+        document.getElementById('histBody').innerHTML = '<div class="hist-loading">⏳ Đang tải lịch sử...</div>';
+        document.getElementById('histModal').classList.add('open');
+
+        fetch('/Doctor/PatientHistory?patientId=' + patientId + '&doctorId=' + doctorId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data || !data.length) {
+                    document.getElementById('histBody').innerHTML = '<div class="hist-empty">Không có lịch sử khám nào.</div>';
+                    return;
+                }
+                _histData = data;
+                var html = data.map(function(h, idx) {
+                    var d = new Date(h.workDate);
+                    var dateStr = d.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+                    var diagHtml = h.diagnosis
+                        ? '<div class="hist-diag">🩺 <strong>Chuẩn đoán:</strong> ' + escHtml(h.diagnosis) + '</div>'
+                        : '<div class="hist-diag" style="color:#aaa;font-style:italic;">Chưa có chuẩn đoán</div>';
+                    var noteHtml = h.note
+                        ? '<div class="hist-note">📋 ' + escHtml(h.note) + '</div>'
+                        : '';
+                    return '<div class="hist-item">' +
+                        '<div class="hist-item-header">' +
+                            '<span class="hist-date">📅 ' + dateStr + ' &nbsp; ' + escHtml(h.startTime) + ' – ' + escHtml(h.endTime) + '</span>' +
+                            '<div style="display:flex;align-items:center;gap:6px;">' +
+                                '<span class="hist-code">' + escHtml(h.bookingCode) + '</span>' +
+                                '<button class="btn-eye-hist" onclick="openHistDetail(' + idx + ')">👁 Xem</button>' +
+                            '</div>' +
+                        '</div>' +
+                        diagHtml + noteHtml +
+                    '</div>';
+                }).join('');
+                document.getElementById('histBody').innerHTML = html;
+            })
+            .catch(function() {
+                document.getElementById('histBody').innerHTML = '<div class="hist-empty">Lỗi kết nối, vui lòng thử lại.</div>';
+            });
+    }
+
+    function closeHistory() {
+        document.getElementById('histModal').classList.remove('open');
+    }
+
+    function openHistDetail(idx) {
+        var h = _histData[idx];
+        if (!h) return;
+        var d = new Date(h.workDate);
+        var dateStr = d.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+        var today = new Date();
+        var todayStr = 'Hà Nội, ngày ' + today.getDate().toString().padStart(2,'0') +
+                       ' tháng ' + (today.getMonth()+1).toString().padStart(2,'0') +
+                       ' năm ' + today.getFullYear();
+
+        document.getElementById('hd_code').textContent      = 'Mã phiếu: ' + (h.bookingCode || '');
+        document.getElementById('hd_patient').textContent   = h.patientName  || '';
+        document.getElementById('hd_date').textContent      = dateStr;
+        document.getElementById('hd_time').textContent      = (h.startTime || '') + ' – ' + (h.endTime || '');
+        document.getElementById('hd_booking').textContent   = h.bookingCode  || '';
+        document.getElementById('hd_doctor').textContent    = h.doctorName   || '';
+        document.getElementById('hd_specialty').textContent = h.specialty    || 'Tai Mũi Họng';
+
+        var noteSection = document.getElementById('hd_note_section');
+        if (h.note) {
+            document.getElementById('hd_note').textContent = h.note;
+            noteSection.style.display = '';
+        } else {
+            noteSection.style.display = 'none';
+        }
+
+        document.getElementById('hd_diagnosis').textContent    = h.diagnosis   || 'Chưa có kết quả chẩn đoán.';
+        document.getElementById('hd_patient_sign').textContent = h.patientName || '';
+        document.getElementById('hd_doctor_sign').textContent  = h.doctorName  || '';
+        document.getElementById('hd_sign_date').textContent    = todayStr;
+
+        document.getElementById('histDetailOverlay').classList.add('open');
+    }
+
+    function closeHistDetail() {
+        document.getElementById('histDetailOverlay').classList.remove('open');
+    }
+
+    // Escape HTML để tránh XSS khi render dữ liệu từ server vào innerHTML
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Bài viết ─────────────────────────────────────────────────────
+    var articlesLoaded = false;
+    var currentArticleId = null;
+
+    function loadMyArticles() {
+        document.getElementById('articleList').innerHTML = '<div class="empty-state">Đang tải...</div>';
+        fetch('/Doctor/GetMyArticles')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.length) {
+                    document.getElementById('articleList').innerHTML =
+                        '<div class="empty-state">Chưa có bài viết nào. Bấm "+ Viết bài mới" để bắt đầu.</div>';
+                    return;
+                }
+                document.getElementById('articleList').innerHTML = data.map(function(a) {
+                    var badge = a.statusDisplay === 'Đã đăng'
+                        ? '<span class="badge-pub">Đã đăng</span>'
+                        : '<span class="badge-draft">Nháp</span>';
+                    var date = a.publishedAt
+                        ? new Date(a.publishedAt).toLocaleDateString('vi-VN')
+                        : new Date(a.createdAt).toLocaleDateString('vi-VN');
+                    return '<div class="article-card">' +
+                        '<div style="flex:1">' +
+                            '<div class="article-card-title">' + escHtml(a.title) + '</div>' +
+                            '<div class="article-card-meta">' + escHtml(a.category) + ' · ' + date + ' · ' + badge + '</div>' +
+                        '</div>' +
+                        '<div style="display:flex;gap:6px;flex-shrink:0;">' +
+                            '<button class="btn-action btn-diag" onclick="openEditor(' + a.id + ')">Sửa</button>' +
+                            '<button class="btn-action btn-vang" style="background:#fdecea;color:#a32d2d;border-color:#f5c6c6;" onclick="deleteArticle(' + a.id + ')">Xóa</button>' +
+                        '</div></div>';
+                }).join('');
+            })
+            .catch(function() { document.getElementById('articleList').innerHTML = '<div class="empty-state">Lỗi kết nối</div>'; });
+    }
+
+    function openEditor(id) {
+        currentArticleId = id;
+        document.getElementById('editorErr').style.display = 'none';
+        document.getElementById('editorOk').style.display  = 'none';
+        document.getElementById('editorTitleLabel').textContent = id ? 'Sửa bài viết' : 'Viết bài mới';
+        ['artTitle','artCategory','artThumbnail','artSummary','artContent'].forEach(function(f) {
+            document.getElementById(f).value = '';
+        });
+        document.getElementById('artImageFile').value = '';
+        document.getElementById('thumbPreview').style.display    = 'none';
+        document.getElementById('thumbPlaceholder').style.display = 'block';
+        document.getElementById('uploadErr').style.display        = 'none';
+
+        if (id) {
+            fetch('/Doctor/GetArticleDetail?id=' + id)
+                .then(function(r) { return r.json(); })
+                .then(function(a) {
+                    document.getElementById('artTitle').value     = a.title     || '';
+                    document.getElementById('artCategory').value  = a.category  || '';
+                    document.getElementById('artThumbnail').value = a.thumbnail || '';
+                    document.getElementById('artSummary').value   = a.summary   || '';
+                    document.getElementById('artContent').value   = a.content   || '';
+                    if (a.thumbnail) {
+                        document.getElementById('thumbPreview').src           = a.thumbnail;
+                        document.getElementById('thumbPreview').style.display    = 'block';
+                        document.getElementById('thumbPlaceholder').style.display = 'none';
+                    }
+                });
+        }
+        document.getElementById('editorModal').classList.add('open');
+    }
+
+    function previewAndUpload(input) {
+        var file = input.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('thumbPreview').src = e.target.result;
+            document.getElementById('thumbPreview').style.display    = 'block';
+            document.getElementById('thumbPlaceholder').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        document.getElementById('uploadProgress').style.display = 'block';
+        document.getElementById('uploadErr').style.display = 'none';
+        var formData = new FormData();
+        formData.append('file', file);
+        fetch('/Doctor/UploadArticleImage', {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': csrfToken },
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            document.getElementById('uploadProgress').style.display = 'none';
+            if (data.success) {
+                document.getElementById('artThumbnail').value = data.url;
+            } else {
+                document.getElementById('uploadErr').textContent = data.message;
+                document.getElementById('uploadErr').style.display = 'block';
+                document.getElementById('thumbPreview').style.display    = 'none';
+                document.getElementById('thumbPlaceholder').style.display = 'block';
+            }
+        })
+        .catch(function() {
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('uploadErr').textContent = 'Lỗi kết nối khi tải ảnh.';
+            document.getElementById('uploadErr').style.display = 'block';
+        });
+    }
+
+    function closeEditor() { document.getElementById('editorModal').classList.remove('open'); }
+
+    function saveArticle(publish) {
+        var title    = document.getElementById('artTitle').value.trim();
+        var category = document.getElementById('artCategory').value;
+        var summary  = document.getElementById('artSummary').value.trim();
+        var content  = document.getElementById('artContent').value.trim();
+        var errEl    = document.getElementById('editorErr');
+        errEl.style.display = 'none';
+
+        if (!title)    { errEl.textContent = 'Vui lòng nhập tiêu đề.';  errEl.style.display = 'block'; return; }
+        if (!category) { errEl.textContent = 'Vui lòng chọn chủ đề.';   errEl.style.display = 'block'; return; }
+        if (!summary)  { errEl.textContent = 'Vui lòng nhập tóm tắt.';  errEl.style.display = 'block'; return; }
+        if (!content)  { errEl.textContent = 'Vui lòng nhập nội dung.'; errEl.style.display = 'block'; return; }
+
+        var url = currentArticleId ? '/Doctor/UpdateArticle?id=' + currentArticleId : '/Doctor/CreateArticle';
+        var btn = publish ? document.getElementById('savePublishBtn') : document.getElementById('saveDraftBtn');
+        btn.disabled = true;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
+            body: JSON.stringify({
+                title: title, category: category, summary: summary, content: content, publish: publish,
+                thumbnail: document.getElementById('artThumbnail').value.trim() || null
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                document.getElementById('editorOk').textContent = data.message;
+                document.getElementById('editorOk').style.display = 'block';
+                setTimeout(function() { closeEditor(); loadMyArticles(); }, 1200);
+            } else {
+                errEl.textContent = data.message || 'Có lỗi xảy ra.';
+                errEl.style.display = 'block';
+            }
+        })
+        .catch(function() { errEl.textContent = 'Lỗi kết nối.'; errEl.style.display = 'block'; })
+        .finally(function() { btn.disabled = false; });
+    }
+
+    function deleteArticle(id) {
+        if (!confirm('Xác nhận xóa bài viết này?')) return;
+        fetch('/Doctor/DeleteArticle?id=' + id, {
+            method: 'POST', headers: { 'RequestVerificationToken': csrfToken }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) { if (data.success) loadMyArticles(); else alert(data.message); });
+    }
+    // ── Phiếu khám bệnh (chỉ bác sĩ) ───────────────────────────────
+    function buildDoctorActionsAndStore(a) {
+        allCards[a.id] = a;  // lưu lại để openPhieu truy xuất
+        return buildDoctorActions(a);
+    }
+
+    function openPhieuStatic(obj) { fillPhieu(obj); }
+    function openPhieu(a)         { if (a) fillPhieu(a); }
+
+    function fillPhieu(a) {
+        var d = new Date(a.workDate || a.WorkDate);
+        var ngay  = d.getDate().toString().padStart(2,'0');
+        var thang = (d.getMonth()+1).toString().padStart(2,'0');
+        var nam   = d.getFullYear();
+        var ngaykham = d.toLocaleDateString('vi-VN', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'});
+
+        var today = new Date();
+        var ngayky = 'Ngày ' + today.getDate() + ' tháng ' + (today.getMonth()+1) + ' năm ' + today.getFullYear();
+
+        setText('ph_code',       a.bookingCode  || a.BookingCode  || '');
+        setText('ph_ngaykham',   ngaykham);
+        setText('ph_hoten',      a.patientName  || a.PatientName  || '');
+        setText('ph_malich',     a.bookingCode  || a.BookingCode  || '');
+        setText('ph_bacsi',   'BS. ' + (a.doctorName  || a.DoctorName  || ''));
+        setText('ph_chuyenkhoa', a.specialty    || a.Specialty    || 'Tai Mũi Họng');
+        setText('ph_giokham',   (a.startTime    || a.StartTime    || '') + ' – ' + (a.endTime || a.EndTime || ''));
+        setText('ph_ngay',       ngay);
+        setText('ph_thang',      thang);
+        setText('ph_nam',        nam);
+        setText('ph_ghichu',     a.note || a.Note || '(Không có ghi chú)');
+        setText('ph_chandoan',   a.diagnosis || a.Diagnosis || 'Chưa có kết quả chẩn đoán.');
+        setText('ph_ngayky',     ngayky);
+        setText('ph_bsSign',  'BS. ' + (a.doctorName || a.DoctorName || ''));
+
+        document.getElementById('phieuModal').classList.add('open');
+    }
+
+    function closePhieu() {
+        document.getElementById('phieuModal').classList.remove('open');
+    }
+
+    function setText(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = val || '';
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ĐƠN THUỐC
+    // ══════════════════════════════════════════════════════════
+    var _rxAppointmentId = 0;
+    var _rxPrescriptionId = 0;  // 0 = chưa có đơn, >0 = đang sửa
+    var _rxItems = [];
+    var _rxItemCnt = 0;
+
+    function openRx(appointmentId) {
+        _rxAppointmentId  = appointmentId;
+        _rxPrescriptionId = 0;
+        _rxItems = [];
+        _rxItemCnt = 0;
+
+        var a = allCards[appointmentId];
+        if (!a) return;
+
+        // Điền thông tin bệnh nhân
+        setText('rxPatientName',  a.patientName  || a.PatientName  || '—');
+        setText('rxBookingCode',  a.bookingCode  || a.BookingCode  || '—');
+        setText('rxWorkDate', a.workDate ? new Date(a.workDate).toLocaleDateString('vi-VN') : '—');
+        setText('rxDiagnosis',    a.diagnosis    || a.Diagnosis    || 'Chưa có chuẩn đoán');
+
+        document.getElementById('rxNotes').value = '';
+        document.getElementById('rxMsg').textContent = '';
+        document.getElementById('rxMsg').className = 'rx-msg';
+
+        // Ẩn nút in đơn thuốc cho đến khi đã lưu
+        document.getElementById('rxBtnPrint').style.display = 'none';
+
+        // Tải đơn thuốc hiện có (nếu có)
+        // document.getElementById('rxItemsBody').innerHTML =
+            //'<tr><td colspan="7" style="text-align:center;color:#7a9bb0;padding:16px;">⏳ Đang tải...</td></tr>';
+        document.getElementById('rxOverlay').classList.add('open');
+
+        fetch('/Doctor/GetPrescription?appointmentId=' + appointmentId)
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success && res.data) {
+                    _rxPrescriptionId = res.data.id;
+                    document.getElementById('rxNotes').value = res.data.notes || '';
+                    document.getElementById('rxBtnPrint').style.display = '';
+                    // Load items
+                    (res.data.items || []).forEach(function(item) {
+                        rxAddRow(item.medicineName, item.dosage, item.frequency, item.durationDays, item.quantity, item.instructions);
+                    });
+                    if (!res.data.items || !res.data.items.length) rxAddRow();
+                } else {
+                    // Chưa có đơn — bắt đầu với 1 dòng trống
+                    rxAddRow();
+                }
+            })
+            .catch(function() { rxAddRow(); });
+    }
+
+    function closeRx() {
+        document.getElementById('rxOverlay').classList.remove('open');
+    }
+
+    function rxAddRow(medicine, dosage, freq, days, qty, instr) {
+        var id = ++_rxItemCnt;
+        _rxItems.push(id);
+        var tbody = document.getElementById('rxItemsBody');
+        // Xoá placeholder nếu còn
+        var placeholder = tbody.querySelector('tr[data-placeholder]');
+        if (placeholder) placeholder.remove();
+
+        var tr = document.createElement('tr');
+        tr.id = 'rxRow-' + id;
+        tr.innerHTML =
+            '<td><input class="rx-item-inp" id="rxMed-'  + id + '" value="' + esc(medicine||'') + '" placeholder="VD: Amoxicillin 500mg" /></td>' +
+            '<td><input class="rx-item-inp" id="rxDose-' + id + '" value="' + esc(dosage||'')   + '" placeholder="VD: 1 viên" style="width:80px;" /></td>' +
+            '<td><input class="rx-item-inp" id="rxFreq-' + id + '" value="' + esc(freq||'')     + '" placeholder="VD: 3 lần/ngày" /></td>' +
+            '<td><input class="rx-item-num" id="rxDays-' + id + '" type="number" min="1" max="365" value="' + (days||7) + '" style="width:54px;" /></td>' +
+            '<td><input class="rx-item-num" id="rxQty-'  + id + '" type="number" min="1" value="'           + (qty||21)  + '" style="width:54px;" /></td>' +
+            '<td><input class="rx-item-inp" id="rxInstr-'+ id + '" value="' + esc(instr||'')   + '" placeholder="Uống sau ăn..." /></td>' +
+            '<td><button class="rx-del-btn" onclick="rxRemoveRow(' + id + ')">×</button></td>';
+        tbody.appendChild(tr);
+    }
+
+    function rxRemoveRow(id) {
+        var row = document.getElementById('rxRow-' + id);
+        if (row) row.remove();
+        _rxItems = _rxItems.filter(function(x) { return x !== id; });
+        if (!_rxItems.length) {
+            document.getElementById('rxItemsBody').innerHTML =
+                '<tr data-placeholder><td colspan="7" style="text-align:center;color:#bbb;padding:14px;font-size:12px;">Chưa có thuốc nào. Bấm "+ Thêm thuốc" để thêm.</td></tr>';
+        }
+    }
+
+    function rxCollectItems() {
+        return _rxItems.map(function(id) {
+            return {
+                medicineName: (document.getElementById('rxMed-'   + id)?.value || '').trim(),
+                dosage:       (document.getElementById('rxDose-'  + id)?.value || '').trim(),
+                frequency:    (document.getElementById('rxFreq-'  + id)?.value || '').trim(),
+                durationDays: parseInt(document.getElementById('rxDays-'  + id)?.value) || 7,
+                quantity:     parseInt(document.getElementById('rxQty-'   + id)?.value) || 1,
+                instructions: (document.getElementById('rxInstr-' + id)?.value || '').trim()
+            };
+        }).filter(function(i) { return i.medicineName; });
+    }
+
+    function saveRx() {
+        var msgEl = document.getElementById('rxMsg');
+        msgEl.textContent = ''; msgEl.className = 'rx-msg';
+        var items = rxCollectItems();
+        if (!items.length) {
+            msgEl.textContent = '❌ Vui lòng thêm ít nhất 1 loại thuốc.';
+            msgEl.className = 'rx-msg err'; return;
+        }
+        var notes = document.getElementById('rxNotes').value.trim();
+        var payload, url, method;
+
+        if (_rxPrescriptionId > 0) {
+            // Cập nhật
+            url    = '/Doctor/UpdatePrescription?id=' + _rxPrescriptionId;
+            method = 'PUT';
+            payload = { notes: notes, items: items };
+        } else {
+            // Tạo mới
+            url    = '/Doctor/CreatePrescription';
+            method = 'POST';
+            payload = { appointmentId: _rxAppointmentId, notes: notes, items: items };
+        }
+
+        msgEl.textContent = '⏳ Đang lưu...'; msgEl.className = 'rx-msg';
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': csrfToken },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                _rxPrescriptionId = res.data?.id || _rxPrescriptionId;
+                msgEl.textContent = '✅ ' + (res.message || 'Lưu đơn thuốc thành công.');
+                msgEl.className = 'rx-msg ok';
+                document.getElementById('rxBtnPrint').style.display = '';
+            } else {
+                msgEl.textContent = '❌ ' + (res.message || 'Có lỗi xảy ra.');
+                msgEl.className = 'rx-msg err';
+            }
+        })
+        .catch(function() {
+            msgEl.textContent = '❌ Lỗi kết nối.'; msgEl.className = 'rx-msg err';
+        });
+    }
+
+    // Mở trang in đơn thuốc trong tab mới
+    function openDonThuoc(appointmentId) {
+        window.open('/Doctor/PrintPrescription?appointmentId=' + appointmentId, '_blank');
+    }
+
+    // Nút In trong modal đơn thuốc
+    function rxPrint() {
+        if (!_rxAppointmentId) return;
+        window.open('/Doctor/PrintPrescription?appointmentId=' + _rxAppointmentId, '_blank');
+    }
+
+    function esc(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    // setInterval(function() {
+    // loadAppointments(); hoặc doSearch() nếu đang search
+    // }, 30000); 30 giây refresh 1 lần
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script src="~/js/internal-chat.js" asp-append-version="true"></script>
+}

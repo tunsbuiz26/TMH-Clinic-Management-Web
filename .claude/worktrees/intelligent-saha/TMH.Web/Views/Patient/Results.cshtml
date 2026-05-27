@@ -1,0 +1,712 @@
+@{
+    ViewBag.Title = "Kết quả khám bệnh";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var apptJson = ViewBag.AppointmentsJson as string ?? "[]";
+}
+
+@section Styles {
+<style>
+    /* ── Nền & layout tổng thể ───────────────────────────────── */
+    .rs-wrap {
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 20px 60px;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .rs-header {
+        margin-bottom: 32px;
+    }
+    .rs-header-eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #c9a227;
+        margin-bottom: 8px;
+    }
+    .rs-header-title {
+        font-family: 'Crimson Pro', serif;
+        font-size: 32px;
+        font-weight: 700;
+        color: #0a2d4a;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    }
+    .rs-header-sub {
+        font-size: 13px;
+        color: #7a9bb0;
+    }
+
+    /* ── Tabs ────────────────────────────────────────────────── */
+    .rs-tabs {
+        display: flex;
+        gap: 4px;
+        background: #f0f8ff;
+        border-radius: 12px;
+        padding: 5px;
+        margin-bottom: 28px;
+        width: fit-content;
+    }
+    .rs-tab {
+        padding: 8px 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #7a9bb0;
+        background: none;
+        border: none;
+        border-radius: 9px;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: all .2s;
+    }
+    .rs-tab.active {
+        background: #fff;
+        color: #0a4d7c;
+        box-shadow: 0 1px 6px rgba(10,77,124,.12);
+    }
+
+    /* ── Empty state ─────────────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 60px 24px;
+        background: #fff;
+        border: 1px solid #e8f2fb;
+        border-radius: 16px;
+        color: #7a9bb0;
+    }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; }
+    .empty-title { font-size: 16px; font-weight: 600; color: #0a4d7c; margin-bottom: 6px; }
+    .empty-desc { font-size: 13px; line-height: 1.6; }
+
+    /* ── Thẻ lịch khám (danh sách) ───────────────────────────── */
+    .rs-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .rs-card {
+        background: #fff;
+        border: 1px solid #e8f2fb;
+        border-radius: 16px;
+        padding: 0;
+        overflow: hidden;
+        transition: box-shadow .2s, transform .2s;
+    }
+    .rs-card:hover {
+        box-shadow: 0 6px 24px rgba(10,77,124,.1);
+        transform: translateY(-1px);
+    }
+
+    /* Thanh màu trạng thái trái */
+    .rs-card-inner {
+        display: flex;
+        gap: 0;
+    }
+    .rs-card-stripe {
+        width: 5px;
+        flex-shrink: 0;
+        border-radius: 0;
+    }
+    .stripe-done    { background: #2d7a52; }
+    .stripe-waiting { background: #c9a227; }
+    .stripe-active  { background: #0a4d7c; }
+    .stripe-cancel  { background: #ccc; }
+
+    .rs-card-body {
+        flex: 1;
+        padding: 18px 20px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    /* Ô ngày */
+    .rs-date-box {
+        text-align: center;
+        background: #f0f8ff;
+        border-radius: 10px;
+        padding: 10px 14px;
+        min-width: 52px;
+        flex-shrink: 0;
+    }
+    .rs-date-day   { font-size: 22px; font-weight: 700; color: #0a4d7c; line-height: 1; }
+    .rs-date-month { font-size: 10px; color: #7a9bb0; text-transform: uppercase; margin-top: 2px; }
+
+    .rs-info { flex: 1; min-width: 0; }
+
+    /* Badge trạng thái */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        margin-bottom: 6px;
+    }
+    .badge-done    { background: #e6f5ee; color: #2d7a52; }
+    .badge-waiting { background: #fef9e7; color: #856404; }
+    .badge-active  { background: #e8f4fd; color: #0a4d7c; }
+    .badge-cancel  { background: #f5f5f5; color: #888; }
+
+    .rs-doctor {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0a2d4a;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .rs-meta {
+        font-size: 12px;
+        color: #7a9bb0;
+        margin-bottom: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .rs-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* Ô chuẩn đoán */
+    .rs-diag {
+        background: #f0faf4;
+        border-left: 3px solid #2d7a52;
+        border-radius: 0 8px 8px 0;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #1a5c38;
+        line-height: 1.5;
+        margin-top: 4px;
+    }
+    .rs-diag-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #2d7a52;
+        margin-bottom: 3px;
+    }
+
+    /* Trạng thái đang chờ */
+    .rs-pending {
+        background: #fffbeb;
+        border-left: 3px solid #c9a227;
+        border-radius: 0 8px 8px 0;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #7a5500;
+        margin-top: 4px;
+    }
+
+    /* Nút hành động */
+    .rs-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-end;
+        flex-shrink: 0;
+    }
+    .btn-view {
+        height: 34px;
+        padding: 0 14px;
+        background: #fff;
+        color: #0a4d7c;
+        border: 1.5px solid #0a4d7c;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all .15s;
+        white-space: nowrap;
+    }
+    .btn-view:hover { background: #0a4d7c; color: #fff; }
+    .booking-chip {
+        font-family: monospace;
+        font-size: 10px;
+        background: #f0f8ff;
+        color: #1a6fa8;
+        padding: 3px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+
+    /* ── Modal phiếu kết quả ─────────────────────────────────── */
+    .print-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        z-index: 9999;
+        align-items: flex-start;
+        justify-content: center;
+        overflow-y: auto;
+        padding: 24px 16px;
+        backdrop-filter: blur(3px);
+    }
+    .print-modal.open { display: flex; }
+
+    .print-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .btn-close-print {
+        height: 38px; padding: 0 18px;
+        background: rgba(255,255,255,.9); color: #555;
+        border: none; border-radius: 9px; font-size: 13px;
+        cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── Phiếu in ────────────────────────────────────────────── */
+    .print-sheet {
+        background: #fff;
+        width: 720px;
+        max-width: 100%;
+        border-radius: 12px;
+        padding: 44px 48px;
+        font-family: 'Times New Roman', serif;
+        margin: 0 auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+
+    .phieu-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 2px solid #0a4d7c;
+        padding-bottom: 18px;
+        margin-bottom: 22px;
+    }
+    .phieu-clinic-name {
+        font-size: 15px;
+        font-weight: bold;
+        color: #0a4d7c;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+    .phieu-clinic-addr {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+        line-height: 1.5;
+    }
+    .phieu-logo-box {
+        width: 52px; height: 52px;
+        background: #0a4d7c;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .phieu-title-main {
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: #0a2d4a;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: 4px;
+    }
+    .phieu-code-line {
+        text-align: center;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        color: #7a9bb0;
+        margin-bottom: 24px;
+    }
+
+    .phieu-section {
+        margin-bottom: 20px;
+    }
+    .phieu-section-hd {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #0a4d7c;
+        background: #f0f8ff;
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .phieu-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 7px;
+        font-size: 13px;
+        padding: 0 6px;
+    }
+    .phieu-lbl {
+        color: #555;
+        min-width: 170px;
+        flex-shrink: 0;
+    }
+    .phieu-val {
+        color: #111;
+        font-weight: 500;
+        flex: 1;
+    }
+
+    /* Ô chuẩn đoán trên phiếu */
+    .phieu-diag-box {
+        border: 1.5px solid #0a4d7c;
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 14px;
+        color: #0a2d4a;
+        line-height: 1.7;
+        min-height: 70px;
+        margin: 4px 0;
+        background: #fafcff;
+    }
+    .phieu-note-box {
+        border: 1px solid #d4e8f5;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: #333;
+        min-height: 50px;
+        background: #fff;
+        line-height: 1.6;
+        margin: 4px 0;
+    }
+
+    /* Chữ ký */
+    .phieu-footer {
+        margin-top: 36px;
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px dashed #d4e8f5;
+        padding-top: 20px;
+    }
+    .phieu-sign { text-align: center; min-width: 160px; }
+    .phieu-sign-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; color: #0a2d4a; }
+    .phieu-sign-date  { font-family: 'DM Sans', sans-serif; font-size: 11px; color: #7a9bb0; margin-top: 2px; }
+    .phieu-sign-space { height: 56px; }
+
+        .phieu-sign-space1 {
+            height: 23px;
+        }
+    .phieu-sign-name  { font-size: 13px; font-weight: 600; border-top: 1px solid #333; padding-top: 4px; display: inline-block; min-width: 120px; }
+
+    .phieu-watermark {
+        text-align: center;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 10px;
+        color: #bbb;
+        margin-top: 24px;
+        padding-top: 14px;
+        border-top: 1px solid #f0f0f0;
+        line-height: 1.6;
+    }
+
+    /* Bệnh nhân không được in — nút in bị ẩn hoàn toàn */
+    @@media print { body * { visibility: hidden; } }
+</style>
+}
+
+<div class="rs-wrap">
+
+    <!-- Header -->
+    <div class="rs-header">
+        <div class="rs-header-eyebrow">Hồ sơ sức khoẻ</div>
+        <div class="rs-header-title">Kết quả khám bệnh</div>
+        <div class="rs-header-sub">Xem lịch sử khám và in phiếu kết quả chẩn đoán của bác sĩ</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="rs-tabs">
+        <button class="rs-tab active" id="tabDone" onclick="switchTab('done', this)">✅ Đã hoàn thành</button>
+        <button class="rs-tab" id="tabPending" onclick="switchTab('pending', this)">⏳ Đang chờ / Đang khám</button>
+        <button class="rs-tab" id="tabAll" onclick="switchTab('all', this)">📋 Tất cả</button>
+    </div>
+
+    <!-- Danh sách -->
+    <div class="rs-list" id="resultList"></div>
+</div>
+
+<!-- ── Modal phiếu kết quả ───────────────────────────────────── -->
+<div class="print-modal" id="printModal" onclick="if(event.target===this)closeDetail()">
+    <div style="width:100%;max-width:720px;">
+        <div class="print-controls">
+            <button class="btn-close-print" onclick="closeDetail()">✕ Đóng</button>
+        </div>
+
+        <div class="print-sheet" id="printSheet">
+            <!-- Tiêu đề phòng khám -->
+            <div class="phieu-top">
+                <div>
+                    <div class="phieu-clinic-name">Phòng Khám Chuyên Khoa Tai Mũi Họng</div>
+                    <div class="phieu-clinic-addr">
+                        123 Đường Y Tế, Q.1, TP.HCM<br>
+                        Hotline: 1800 5678 &nbsp;|&nbsp; Email: info@pktaimuihong.vn
+                    </div>
+                </div>
+                <div class="phieu-logo-box">🏥</div>
+            </div>
+
+            <div class="phieu-title-main">Chi tiết kết quả khám bệnh</div>
+            <div class="phieu-code-line" id="pCode"></div>
+
+            <!-- I. Thông tin bệnh nhân -->
+            <div class="phieu-section">
+                <div class="phieu-section-hd">I. Thông tin bệnh nhân</div>
+                <div class="phieu-row"><span class="phieu-lbl">Họ và tên:</span><span class="phieu-val" id="pPatient"></span></div>
+                <div class="phieu-row"><span class="phieu-lbl">Ngày khám:</span><span class="phieu-val" id="pDate"></span></div>
+                <div class="phieu-row"><span class="phieu-lbl">Giờ khám:</span><span class="phieu-val" id="pTime"></span></div>
+                <div class="phieu-row"><span class="phieu-lbl">Mã đặt lịch:</span><span class="phieu-val" id="pBooking"></span></div>
+            </div>
+
+            <!-- II. Thông tin bác sĩ -->
+            <div class="phieu-section">
+                <div class="phieu-section-hd">II. Bác sĩ phụ trách</div>
+                <div class="phieu-row"><span class="phieu-lbl">Họ và tên bác sĩ:</span><span class="phieu-val" id="pDoctor"></span></div>
+                <div class="phieu-row"><span class="phieu-lbl">Chuyên khoa:</span><span class="phieu-val" id="pSpecialty"></span></div>
+            </div>
+
+            <!-- III. Chuẩn đoán -->
+            <div class="phieu-section">
+                <div class="phieu-section-hd">III. Kết quả khám & Chẩn đoán</div>
+                <div class="phieu-diag-box" id="pDiagnosis"></div>
+            </div>
+
+            <!-- IV. Ghi chú / Lời dặn -->
+            <div class="phieu-section">
+                <div class="phieu-section-hd">IV. Lời dặn / Ghi chú</div>
+                <div class="phieu-note-box" id="pNote"></div>
+            </div>
+
+            <!-- Chữ ký -->
+            <div class="phieu-footer">
+                <div class="phieu-sign">
+                    <div class="phieu-sign-space1"></div>
+                    <div class="phieu-sign-title">Bệnh nhân</div>
+                    <div class="phieu-sign-date">(Ký và ghi rõ họ tên)</div>
+                    <div class="phieu-sign-space"></div>
+                    <div class="phieu-sign-name" id="pPatientSign">&nbsp;</div>
+                </div>
+                <div class="phieu-sign">
+                    <div class="phieu-sign-date" id="pSignDate" style="font-size:12px;color:#333;font-style:italic;min-height:16px;"></div>
+                    <div class="phieu-sign-title">Bác sĩ điều trị</div>
+                    <div class="phieu-sign-date">(Ký và ghi rõ họ tên)</div>
+                    
+                    <div class="phieu-sign-space"></div>
+                    <div class="phieu-sign-name" id="pDoctorSign">&nbsp;</div>
+                </div>
+            </div>
+
+            <div class="phieu-watermark">
+                Phiếu có giá trị kể từ ngày khám. Vui lòng lưu giữ để theo dõi lịch sử điều trị.<br>
+                © 2026 Phòng Khám Tai Mũi Họng &nbsp;–&nbsp; Hệ thống TMH Solution
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="_apptData">@Html.Raw(apptJson)</script>
+
+@section Scripts {
+<script>
+    var allAppts = [];
+    var currentTab = 'done';
+
+    try {
+        allAppts = JSON.parse(document.getElementById('_apptData').textContent || '[]');
+        if (!Array.isArray(allAppts)) allAppts = [];
+    } catch(e) { allAppts = []; }
+
+    // Render ngay khi load
+    renderTab('done');
+
+    // ── Chuyển tab ───────────────────────────────────────────────
+    function switchTab(tab, btn) {
+        currentTab = tab;
+        document.querySelectorAll('.rs-tab').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderTab(tab);
+    }
+
+    function renderTab(tab) {
+        var list;
+        if (tab === 'done') {
+            list = allAppts.filter(function(a) { return a.status === 'HoanThanh'; });
+        } else if (tab === 'pending') {
+            list = allAppts.filter(function(a) {
+                return a.status === 'ChoXacNhan' || a.status === 'DaXacNhan' ||
+                       a.status === 'DaDen'      || a.status === 'DangKham';
+            });
+        } else {
+            list = allAppts.slice();
+        }
+
+        // Sắp xếp mới nhất lên đầu
+        list.sort(function(a, b) { return new Date(b.workDate) - new Date(a.workDate); });
+
+        var el = document.getElementById('resultList');
+
+        if (!list.length) {
+            var msgs = {
+                done:    { icon: '📋', title: 'Chưa có kết quả khám', desc: 'Kết quả sẽ hiện sau khi bác sĩ hoàn thành khám và ghi chẩn đoán.' },
+                pending: { icon: '📅', title: 'Không có lịch đang chờ', desc: 'Bạn hiện không có lịch khám nào đang chờ hoặc đang thực hiện.' },
+                all:     { icon: '🗂', title: 'Chưa có lịch khám nào', desc: 'Hãy đặt lịch để bắt đầu theo dõi lịch sử khám bệnh của bạn.' }
+            };
+            var m = msgs[tab];
+            el.innerHTML = '<div class="empty-state">' +
+                '<div class="empty-icon">' + m.icon + '</div>' +
+                '<div class="empty-title">' + m.title + '</div>' +
+                '<div class="empty-desc">' + m.desc + '</div>' +
+                '</div>';
+            return;
+        }
+
+        el.innerHTML = list.map(function(a) {
+            return buildCard(a);
+        }).join('');
+    }
+
+    // ── Build card ───────────────────────────────────────────────
+    function buildCard(a) {
+        var d = new Date(a.workDate);
+        var day   = d.getDate().toString().padStart(2, '0');
+        var month = d.toLocaleString('vi-VN', { month: 'short' });
+        var dateStr = d.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        // Trạng thái
+        var stripeClass, badgeClass, badgeText, badgeIcon;
+        switch (a.status) {
+            case 'HoanThanh':
+                stripeClass = 'stripe-done';
+                badgeClass  = 'badge-done';
+                badgeIcon   = '✅'; badgeText = 'Đã hoàn thành';
+                break;
+            case 'DangKham':
+                stripeClass = 'stripe-active';
+                badgeClass  = 'badge-active';
+                badgeIcon   = '🩺'; badgeText = 'Đang khám';
+                break;
+            case 'DaDen':
+                stripeClass = 'stripe-active';
+                badgeClass  = 'badge-active';
+                badgeIcon   = '⏳'; badgeText = 'Đã đến — chờ khám';
+                break;
+            case 'DaXacNhan':
+                stripeClass = 'stripe-waiting';
+                badgeClass  = 'badge-waiting';
+                badgeIcon   = '✔'; badgeText = 'Đã xác nhận';
+                break;
+            case 'DaHuy':
+                stripeClass = 'stripe-cancel';
+                badgeClass  = 'badge-cancel';
+                badgeIcon   = '✕'; badgeText = 'Đã huỷ';
+                break;
+            case 'VangMat':
+                stripeClass = 'stripe-cancel';
+                badgeClass  = 'badge-cancel';
+                badgeIcon   = '—'; badgeText = 'Vắng mặt';
+                break;
+            default:
+                stripeClass = 'stripe-waiting';
+                badgeClass  = 'badge-waiting';
+                badgeIcon   = '🕐'; badgeText = 'Chờ xác nhận';
+        }
+
+        // Phần nội dung dưới (chuẩn đoán hoặc trạng thái)
+        var contentHtml = '';
+        if (a.status === 'HoanThanh') {
+            contentHtml = '<div class="rs-diag">' +
+                '<div class="rs-diag-label">Chẩn đoán của bác sĩ</div>' +
+                esc(a.diagnosis || 'Bác sĩ chưa ghi chẩn đoán.') +
+                '</div>';
+        } else if (a.status === 'DangKham') {
+            contentHtml = '<div class="rs-pending">🩺 Bạn đang trong phòng khám. Kết quả sẽ được cập nhật sau khi bác sĩ hoàn thành.</div>';
+        } else if (a.status === 'DaDen') {
+            contentHtml = '<div class="rs-pending">⏳ Bạn đã đến phòng khám. Vui lòng chờ được gọi tên.</div>';
+        } else if (a.status === 'ChoXacNhan' || a.status === 'DaXacNhan') {
+            contentHtml = '<div class="rs-pending">📅 Lịch khám ngày ' + dateStr + ' đang chờ xác nhận từ phòng khám.</div>';
+        }
+
+        // Nút hành động
+        var actionHtml = '';
+        if (a.status === 'HoanThanh') {
+            var idx = allAppts.indexOf(a);
+            actionHtml = '<button class="btn-view" onclick="openDetail(allAppts[' + idx + '])">👁 Xem chi tiết</button>';
+        }
+
+        return '<div class="rs-card">' +
+            '<div class="rs-card-inner">' +
+                '<div class="rs-card-stripe ' + stripeClass + '"></div>' +
+                '<div class="rs-card-body">' +
+                    '<div class="rs-date-box">' +
+                        '<div class="rs-date-day">' + day + '</div>' +
+                        '<div class="rs-date-month">' + month + '</div>' +
+                    '</div>' +
+                    '<div class="rs-info">' +
+                        '<div><span class="status-badge ' + badgeClass + '">' + badgeIcon + ' ' + badgeText + '</span></div>' +
+                        '<div class="rs-doctor">' + esc(a.doctorName || '') + '</div>' +
+                        '<div class="rs-meta">' +
+                            '<span>🕐 ' + (a.startTime || '') + ' – ' + (a.endTime || '') + '</span>' +
+                            '<span>📍 ' + esc(a.specialty || 'Tai Mũi Họng') + '</span>' +
+                            '<span>👤 ' + esc(a.patientName || '') + '</span>' +
+                        '</div>' +
+                        contentHtml +
+                    '</div>' +
+                    '<div class="rs-actions">' +
+                        '<span class="booking-chip">' + esc(a.bookingCode || '') + '</span>' +
+                        actionHtml +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    // ── Mở phiếu in ─────────────────────────────────────────────
+    function openDetail(a) {
+        var d = new Date(a.workDate);
+        var dateStr  = d.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+        var todayObj = new Date();
+        var today    = 'Ngày ' + todayObj.getDate().toString().padStart(2,'0') +
+                       ' tháng ' + (todayObj.getMonth()+1).toString().padStart(2,'0') +
+                       ' năm ' + todayObj.getFullYear();
+
+        document.getElementById('pCode').textContent       = 'Mã phiếu: ' + (a.bookingCode || '');
+        document.getElementById('pPatient').textContent    = a.patientName  || '';
+        document.getElementById('pDate').textContent       = dateStr;
+        document.getElementById('pTime').textContent       = (a.startTime || '') + ' – ' + (a.endTime || '');
+        document.getElementById('pBooking').textContent    = a.bookingCode  || '';
+        document.getElementById('pDoctor').textContent     = (a.doctorName || '');
+        document.getElementById('pSpecialty').textContent  = a.specialty    || 'Tai Mũi Họng';
+        document.getElementById('pDiagnosis').textContent  = a.diagnosis    || 'Chưa có kết quả chẩn đoán.';
+        document.getElementById('pNote').textContent       = a.note         || 'Không có ghi chú thêm.';
+        document.getElementById('pPatientSign').textContent = a.patientName || '';
+        document.getElementById('pDoctorSign').textContent  =  (a.doctorName || '');
+        document.getElementById('pSignDate').textContent    = 'Hà Nội, ' + today;
+
+        document.getElementById('printModal').classList.add('open');
+    }
+
+    function closeDetail() {
+        document.getElementById('printModal').classList.remove('open');
+    }
+
+    // Escape HTML
+    function esc(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>
+}

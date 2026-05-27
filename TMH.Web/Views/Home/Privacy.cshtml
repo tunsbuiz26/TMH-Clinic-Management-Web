@@ -1,0 +1,413 @@
+@{
+    ViewBag.Title = "Chính sách Bảo mật — Phòng Khám TMH";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+.policy-wrap {
+    max-width: 860px;
+    margin: 48px auto 80px;
+    padding: 0 20px;
+}
+.policy-hero {
+    background: linear-gradient(135deg, #00838f 0%, #0097a7 100%);
+    border-radius: 16px;
+    padding: 48px 48px 40px;
+    color: #fff;
+    margin-bottom: 40px;
+}
+.policy-hero-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+}
+.policy-hero h1 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 34px;
+    font-weight: 700;
+    margin: 0 0 10px;
+}
+.policy-hero-meta { font-size: 13px; opacity: .75; margin: 0; }
+.policy-toc {
+    background: #f0fbfc;
+    border: 1px solid #b2ebf2;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+}
+.policy-toc h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #006064;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 0 0 14px;
+}
+.policy-toc ol {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 24px;
+}
+.policy-toc li a { font-size: 13px; color: #00838f; text-decoration: none; }
+.policy-toc li a:hover { text-decoration: underline; }
+
+.policy-section { margin-bottom: 40px; scroll-margin-top: 80px; }
+.policy-section-hd {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0f7fa;
+}
+.section-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #00838f;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.policy-section-hd h2 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #006064;
+    margin: 0;
+}
+.policy-section p { font-size: 14px; color: #374151; line-height: 1.8; margin-bottom: 12px; }
+.policy-section ul, .policy-section ol { padding-left: 22px; margin-bottom: 12px; }
+.policy-section li { font-size: 14px; color: #374151; line-height: 1.8; margin-bottom: 4px; }
+.policy-highlight {
+    background: #e0f7fa;
+    border-left: 4px solid #00838f;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13.5px;
+    color: #004d52;
+    line-height: 1.7;
+}
+.policy-info-box {
+    background: #f0fbfc;
+    border: 1px solid #b2ebf2;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+}
+.policy-info-box p { margin: 0; font-size: 13.5px; color: #006064; }
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13.5px;
+}
+.data-table th {
+    background: #00838f;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+}
+.data-table td { padding: 9px 14px; border-bottom: 1px solid #e0f7fa; color: #374151; }
+.data-table tr:nth-child(even) td { background: #f0fbfc; }
+.data-table tr:last-child td { border-bottom: none; }
+.rights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+}
+.right-card {
+    background: #f0fbfc;
+    border: 1px solid #b2ebf2;
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+.right-card strong {
+    display: block;
+    font-size: 13px;
+    color: #006064;
+    margin-bottom: 4px;
+}
+.right-card span { font-size: 12.5px; color: #5a7a80; line-height: 1.5; }
+.policy-contact-box {
+    background: linear-gradient(135deg, #f0fbfc, #e0f7fa);
+    border: 1px solid #b2ebf2;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-top: 48px;
+    text-align: center;
+}
+.policy-contact-box h3 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 18px;
+    color: #006064;
+    margin: 0 0 8px;
+}
+.policy-contact-box p { font-size: 13.5px; color: #4a7a80; margin: 0 0 4px; }
+.policy-contact-box a { color: #00838f; text-decoration: none; }
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #00838f;
+    text-decoration: none;
+    margin-bottom: 24px;
+}
+.back-link:hover { text-decoration: underline; }
+</style>
+
+<div class="policy-wrap">
+    <a class="back-link" asp-controller="Account" asp-action="Register">← Quay lại</a>
+
+    <div class="policy-hero">
+        <div class="policy-hero-tag">Bảo mật</div>
+        <h1>Chính sách Bảo mật</h1>
+        <p class="policy-hero-meta">Phiên bản 1.0 &nbsp;·&nbsp; Có hiệu lực từ ngày 01/01/2026 &nbsp;·&nbsp; Phòng Khám Tai Mũi Họng TMH</p>
+    </div>
+
+    <div class="policy-toc">
+        <h4>Nội dung</h4>
+        <ol>
+            <li><a href="#p1">Thông tin chúng tôi thu thập</a></li>
+            <li><a href="#p2">Mục đích sử dụng</a></li>
+            <li><a href="#p3">Chia sẻ thông tin</a></li>
+            <li><a href="#p4">Bảo mật dữ liệu</a></li>
+            <li><a href="#p5">Lưu trữ dữ liệu</a></li>
+            <li><a href="#p6">Quyền của bạn</a></li>
+            <li><a href="#p7">Cookie & Tracking</a></li>
+            <li><a href="#p8">Dịch vụ bên thứ ba</a></li>
+            <li><a href="#p9">Trẻ em</a></li>
+            <li><a href="#p10">Liên hệ</a></li>
+        </ol>
+    </div>
+
+    <div class="policy-highlight">
+        Phòng Khám TMH cam kết bảo vệ thông tin cá nhân và dữ liệu y tế của bạn. Chính sách này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ thông tin theo quy định pháp luật Việt Nam về bảo vệ dữ liệu cá nhân (Nghị định 13/2023/NĐ-CP).
+    </div>
+
+    <div class="policy-section" id="p1">
+        <div class="policy-section-hd">
+            <div class="section-num">1</div>
+            <h2>Thông tin Chúng tôi Thu thập</h2>
+        </div>
+        <table class="data-table">
+            <tr>
+                <th>Loại thông tin</th>
+                <th>Chi tiết</th>
+                <th>Bắt buộc?</th>
+            </tr>
+            <tr>
+                <td><strong>Thông tin định danh</strong></td>
+                <td>Họ tên, ngày sinh, giới tính, CCCD/CMND</td>
+                <td>Có</td>
+            </tr>
+            <tr>
+                <td><strong>Thông tin liên hệ</strong></td>
+                <td>Số điện thoại, địa chỉ email</td>
+                <td>Có</td>
+            </tr>
+            <tr>
+                <td><strong>Thông tin tài khoản</strong></td>
+                <td>Tên đăng nhập, mật khẩu (đã mã hóa BCrypt)</td>
+                <td>Có</td>
+            </tr>
+            <tr>
+                <td><strong>Dữ liệu y tế</strong></td>
+                <td>Triệu chứng, lịch sử khám, chẩn đoán, ghi chú bác sĩ</td>
+                <td>Tự nguyện</td>
+            </tr>
+            <tr>
+                <td><strong>Thông tin thanh toán</strong></td>
+                <td>Mã giao dịch VNPay (không lưu số thẻ)</td>
+                <td>Khi thanh toán</td>
+            </tr>
+            <tr>
+                <td><strong>Dữ liệu sử dụng</strong></td>
+                <td>Lịch sử đặt lịch, đánh giá, lịch sử chat AI</td>
+                <td>Tự động</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="policy-section" id="p2">
+        <div class="policy-section-hd">
+            <div class="section-num">2</div>
+            <h2>Mục đích Sử dụng Thông tin</h2>
+        </div>
+        <p>Chúng tôi sử dụng thông tin của bạn cho các mục đích sau:</p>
+        <ul>
+            <li><strong>Cung cấp dịch vụ:</strong> Đặt lịch, xác nhận lịch hẹn, gửi nhắc lịch</li>
+            <li><strong>Chăm sóc y tế:</strong> Chia sẻ thông tin cần thiết với bác sĩ phụ trách</li>
+            <li><strong>Thanh toán:</strong> Xử lý giao dịch và xuất hóa đơn</li>
+            <li><strong>Hỗ trợ khách hàng:</strong> Phản hồi thắc mắc và giải quyết sự cố</li>
+            <li><strong>Cải thiện dịch vụ:</strong> Phân tích dữ liệu ẩn danh để nâng cao hệ thống</li>
+            <li><strong>Pháp lý:</strong> Tuân thủ nghĩa vụ pháp lý và giải quyết tranh chấp</li>
+        </ul>
+        <div class="policy-info-box">
+            <p>Chúng tôi <strong>không</strong> sử dụng thông tin y tế của bạn cho mục đích quảng cáo hoặc bán cho bên thứ ba.</p>
+        </div>
+    </div>
+
+    <div class="policy-section" id="p3">
+        <div class="policy-section-hd">
+            <div class="section-num">3</div>
+            <h2>Chia sẻ Thông tin</h2>
+        </div>
+        <p>Chúng tôi chỉ chia sẻ thông tin trong các trường hợp sau:</p>
+        <ul>
+            <li><strong>Bác sĩ khám bệnh:</strong> Thông tin cần thiết để cung cấp dịch vụ y tế</li>
+            <li><strong>Nhân viên phòng khám:</strong> Thông tin đặt lịch để quản lý dòng bệnh nhân</li>
+            <li><strong>VNPay:</strong> Thông tin giao dịch để xử lý thanh toán (theo chính sách VNPay)</li>
+            <li><strong>Cơ quan pháp luật:</strong> Khi có yêu cầu hợp pháp từ cơ quan có thẩm quyền</li>
+            <li><strong>Trường hợp khẩn cấp:</strong> Khi cần thiết để bảo vệ tính mạng bạn hoặc người khác</li>
+        </ul>
+        <p>Chúng tôi <strong>không bán, cho thuê hoặc trao đổi</strong> thông tin cá nhân của bạn với bên thứ ba vì mục đích thương mại.</p>
+    </div>
+
+    <div class="policy-section" id="p4">
+        <div class="policy-section-hd">
+            <div class="section-num">4</div>
+            <h2>Bảo mật Dữ liệu</h2>
+        </div>
+        <p>Chúng tôi áp dụng các biện pháp bảo mật kỹ thuật và tổ chức để bảo vệ thông tin của bạn:</p>
+        <ul>
+            <li><strong>Mã hóa mật khẩu:</strong> Sử dụng BCrypt với work factor 12 — không thể giải mã ngược</li>
+            <li><strong>HTTPS/TLS:</strong> Toàn bộ dữ liệu truyền tải được mã hóa end-to-end</li>
+            <li><strong>JWT Authentication:</strong> Token xác thực có thời hạn, không lưu thông tin nhạy cảm</li>
+            <li><strong>Phân quyền truy cập:</strong> Mỗi vai trò chỉ truy cập được dữ liệu được phân quyền</li>
+            <li><strong>Không lưu thẻ thanh toán:</strong> Thông tin thẻ được xử lý trực tiếp bởi VNPay</li>
+            <li><strong>Kiểm soát nội bộ:</strong> Chỉ nhân sự được ủy quyền mới truy cập dữ liệu y tế</li>
+        </ul>
+    </div>
+
+    <div class="policy-section" id="p5">
+        <div class="policy-section-hd">
+            <div class="section-num">5</div>
+            <h2>Lưu trữ Dữ liệu</h2>
+        </div>
+        <ul>
+            <li><strong>Thông tin tài khoản:</strong> Lưu trữ trong suốt thời gian tài khoản hoạt động</li>
+            <li><strong>Hồ sơ y tế:</strong> Lưu trữ tối thiểu 10 năm theo quy định pháp luật y tế Việt Nam</li>
+            <li><strong>Lịch sử chat AI:</strong> Tự động xóa hàng ngày lúc 12:00 để bảo vệ quyền riêng tư</li>
+            <li><strong>Lịch sử giao dịch:</strong> Lưu trữ 5 năm theo quy định kế toán</li>
+            <li><strong>Sau khi xóa tài khoản:</strong> Dữ liệu cá nhân sẽ được ẩn danh hóa trong vòng 30 ngày</li>
+        </ul>
+        <p>Dữ liệu được lưu trữ trên máy chủ đặt tại Việt Nam, tuân thủ Nghị định 13/2023/NĐ-CP.</p>
+    </div>
+
+    <div class="policy-section" id="p6">
+        <div class="policy-section-hd">
+            <div class="section-num">6</div>
+            <h2>Quyền của Bạn</h2>
+        </div>
+        <p>Theo quy định pháp luật, bạn có các quyền sau đối với dữ liệu cá nhân:</p>
+        <div class="rights-grid">
+            <div class="right-card">
+                <strong>Quyền truy cập</strong>
+                <span>Xem toàn bộ thông tin cá nhân chúng tôi đang lưu trữ về bạn</span>
+            </div>
+            <div class="right-card">
+                <strong>Quyền chỉnh sửa</strong>
+                <span>Cập nhật thông tin không chính xác trong hồ sơ của bạn</span>
+            </div>
+            <div class="right-card">
+                <strong>Quyền xóa</strong>
+                <span>Yêu cầu xóa tài khoản và ẩn danh hóa dữ liệu cá nhân</span>
+            </div>
+            <div class="right-card">
+                <strong>Quyền phản đối</strong>
+                <span>Phản đối việc xử lý dữ liệu cho mục đích cụ thể</span>
+            </div>
+            <div class="right-card">
+                <strong>Quyền di chuyển</strong>
+                <span>Nhận bản sao dữ liệu của bạn theo định dạng có thể đọc được</span>
+            </div>
+            <div class="right-card">
+                <strong>Quyền rút đồng ý</strong>
+                <span>Thu hồi sự đồng ý xử lý dữ liệu bất kỳ lúc nào</span>
+            </div>
+        </div>
+        <p style="margin-top:16px;">Để thực hiện các quyền trên, vui lòng liên hệ chúng tôi qua email hoặc hotline bên dưới.</p>
+    </div>
+
+    <div class="policy-section" id="p7">
+        <div class="policy-section-hd">
+            <div class="section-num">7</div>
+            <h2>Cookie & Tracking</h2>
+        </div>
+        <p>Hệ thống TMH sử dụng <strong>Session Cookie</strong> để duy trì phiên đăng nhập. Cookie này:</p>
+        <ul>
+            <li>Tự động xóa khi bạn đóng trình duyệt (session cookie)</li>
+            <li>Không chứa thông tin cá nhân — chỉ lưu mã phiên bảo mật</li>
+            <li>Cần thiết để hệ thống hoạt động, không thể tắt khi đăng nhập</li>
+        </ul>
+        <p>Chúng tôi <strong>không</strong> sử dụng cookie theo dõi hành vi, quảng cáo hoặc cookie của bên thứ ba.</p>
+    </div>
+
+    <div class="policy-section" id="p8">
+        <div class="policy-section-hd">
+            <div class="section-num">8</div>
+            <h2>Dịch vụ Bên thứ Ba</h2>
+        </div>
+        <p>Hệ thống tích hợp với các dịch vụ bên ngoài:</p>
+        <ul>
+            <li><strong>VNPay:</strong> Xử lý thanh toán — xem <a href="https://vnpay.vn" target="_blank" style="color:#00838f;">chính sách bảo mật VNPay</a></li>
+            <li><strong>Anthropic Claude API:</strong> Cung cấp chatbot AI tư vấn — nội dung chat có thể được Anthropic xử lý theo chính sách của họ</li>
+            <li><strong>SMTP Email:</strong> Gửi thông báo và nhắc lịch — địa chỉ email của bạn được truyền qua giao thức bảo mật TLS</li>
+        </ul>
+        <div class="policy-info-box">
+            <p>Khi sử dụng chatbot AI, không nên nhập thông tin quá nhạy cảm như số CCCD, thông tin thẻ ngân hàng trong nội dung chat.</p>
+        </div>
+    </div>
+
+    <div class="policy-section" id="p9">
+        <div class="policy-section-hd">
+            <div class="section-num">9</div>
+            <h2>Trẻ em</h2>
+        </div>
+        <p>Hệ thống TMH không dành cho trẻ em dưới 15 tuổi tự đăng ký tài khoản độc lập. Đối với bệnh nhân là trẻ em:</p>
+        <ul>
+            <li>Cha/mẹ hoặc người giám hộ hợp pháp phải đăng ký và quản lý tài khoản</li>
+            <li>Thông tin y tế của trẻ em được bảo vệ với mức độ bảo mật cao nhất</li>
+            <li>Chỉ người giám hộ được phép yêu cầu xóa dữ liệu của trẻ</li>
+        </ul>
+    </div>
+
+    <div class="policy-section" id="p10">
+        <div class="policy-section-hd">
+            <div class="section-num">10</div>
+            <h2>Liên hệ về Bảo mật</h2>
+        </div>
+        <p>Nếu bạn có câu hỏi về chính sách bảo mật hoặc muốn thực hiện quyền của mình, vui lòng liên hệ:</p>
+        <ul>
+            <li><strong>Bộ phận Bảo vệ Dữ liệu (DPO):</strong> privacy@tmh.vn</li>
+            <li><strong>Hotline:</strong> 1900 6868 (Thứ 2 – Thứ 6, 8:00 – 17:00)</li>
+            <li><strong>Địa chỉ:</strong> Phòng Khám Tai Mũi Họng TMH, Hà Nội, Việt Nam</li>
+        </ul>
+        <p>Chúng tôi cam kết phản hồi trong vòng <strong>72 giờ</strong> làm việc.</p>
+    </div>
+
+    <div class="policy-contact-box">
+        <h3>Bảo vệ quyền riêng tư của bạn là ưu tiên của chúng tôi</h3>
+        <p>Liên hệ DPO nếu bạn có bất kỳ lo ngại nào về dữ liệu cá nhân</p>
+        <p>Email: <a href="mailto:privacy@tmh.vn">privacy@tmh.vn</a> &nbsp;·&nbsp; Hotline: <strong>1900 6868</strong></p>
+        <p style="margin-top:8px;font-size:12px;color:#4a8a80;">Phản hồi trong vòng 72 giờ làm việc</p>
+    </div>
+</div>

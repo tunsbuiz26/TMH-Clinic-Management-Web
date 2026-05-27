@@ -1,0 +1,314 @@
+@{
+    ViewBag.Title = "Hồ sơ cá nhân";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userJson = ViewBag.UserInfoJson as string ?? "{}";
+    var profilesJson = ViewBag.ProfilesJson as string ?? "[]";
+}
+<style>
+    .pf-wrap { max-width: 900px; margin: 36px auto; padding: 0 20px; }
+    .pf-title { font-family:'Crimson Pro',serif; font-size:26px; font-weight:600; color:#0a4d7c; margin-bottom:4px; }
+    .pf-sub   { font-size:13px; color:#7a9bb0; margin-bottom:28px; }
+
+    /* Tab bar */
+    .tab-bar { display:flex; border-bottom:2px solid #d4e8f5; margin-bottom:24px; }
+    .tab-btn { padding:10px 20px; font-size:13px; font-weight:500; color:#7a9bb0; background:none; border:none; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; font-family:'DM Sans',sans-serif; }
+    .tab-btn.active { color:#0a4d7c; border-bottom-color:#0a4d7c; }
+
+    /* Card */
+    .pf-card { background:#fff; border:1px solid #d4e8f5; border-radius:14px; padding:24px; margin-bottom:16px; }
+    .pf-card-title { font-size:15px; font-weight:600; color:#0a4d7c; margin-bottom:18px; }
+
+    /* Form grid */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-group { display:flex; flex-direction:column; gap:5px; }
+    .form-group.full { grid-column:1/-1; }
+    .form-label { font-size:11px; font-weight:500; color:#3a5a72; text-transform:uppercase; letter-spacing:.04em; }
+    .form-input { border:1px solid #d4e8f5; border-radius:8px; padding:9px 12px; font-size:13px; outline:none; font-family:'DM Sans',sans-serif; }
+    .form-input:focus { border-color:#1a6fa8; }
+    .form-input:disabled { background:#f8fbff; color:#7a9bb0; }
+    select.form-input { background:#fff; }
+
+    /* Patient profile cards */
+    .pt-profile-card { background:#f8fbff; border:1px solid #d4e8f5; border-radius:12px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .pt-profile-name { font-size:14px; font-weight:500; color:#0a4d7c; }
+    .pt-profile-meta { font-size:12px; color:#7a9bb0; margin-top:3px; }
+    .pt-profile-code { font-family:monospace; font-size:11px; background:#e8f0ff; padding:2px 8px; border-radius:4px; color:#1a6fa8; }
+
+    /* Buttons */
+    .btn-save { height:38px; padding:0 22px; background:#0a4d7c; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-save:hover { background:#1a6fa8; }
+    .btn-outline-sm { height:30px; padding:0 12px; background:#fff; border:1px solid #d4e8f5; color:#3a5a72; border-radius:7px; font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-outline-sm:hover { border-color:#0a4d7c; color:#0a4d7c; }
+    .btn-danger-sm { height:30px; padding:0 12px; background:#fff; border:1px solid #f5c6c6; color:#a32d2d; border-radius:7px; font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-danger-sm:hover { background:#fdecea; }
+    .btn-add { height:36px; padding:0 16px; background:#e8f4fd; color:#0a4d7c; border:1.5px dashed #1a6fa8; border-radius:9px; font-size:13px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; width:100%; margin-top:8px; }
+    .btn-add:hover { background:#d4e8f5; }
+
+    /* Toast */
+    .toast { position:fixed; top:80px; right:24px; z-index:9999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; box-shadow:0 4px 20px rgba(0,0,0,.15); display:none; }
+    .toast.ok  { background:#d4edda; color:#155724; border:1px solid #b8ddc4; }
+    .toast.err { background:#fdecea; color:#a32d2d; border:1px solid #f5c6c6; }
+
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9990; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; padding:28px; width:480px; max-width:95vw; }
+    .modal-title { font-size:16px; font-weight:600; color:#0a4d7c; margin-bottom:20px; }
+    .modal-footer { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
+</style>
+
+<div class="pf-wrap">
+    <div class="pf-title">Hồ sơ cá nhân</div>
+    <div class="pf-sub">Quản lý thông tin tài khoản và hồ sơ bệnh nhân của bạn</div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('info',this)">👤 Thông tin cá nhân</button>
+        <button class="tab-btn" onclick="switchTab('profiles',this)">📋 Hồ sơ bệnh nhân</button>
+    </div>
+
+    <!-- Tab: Thông tin cá nhân -->
+    <div id="tab-info">
+        <div class="pf-card">
+            <div class="pf-card-title">Thông tin tài khoản</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Họ và tên đệm</label>
+                    <input class="form-input" id="hoTenDem" placeholder="Nguyễn Thị" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tên</label>
+                    <input class="form-input" id="ten" placeholder="Bình" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại</label>
+                    <input class="form-input" id="phone" placeholder="0901234567" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" id="email" disabled />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ngày sinh</label>
+                    <input class="form-input" type="date" id="ngaySinh" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giới tính</label>
+                    <select class="form-input" id="gioiTinh">
+                        <option value="">-- Chọn --</option>
+                        <option>Nam</option><option>Nữ</option><option>Khác</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nhóm máu</label>
+                    <select class="form-input" id="nhomMau">
+                        <option value="">-- Chọn --</option>
+                        <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                        <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số CCCD</label>
+                    <input class="form-input" id="soCCCD" placeholder="12 chữ số" maxlength="12" />
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Địa chỉ</label>
+                    <input class="form-input" id="diaChi" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
+                </div>
+            </div>
+            <div style="margin-top:20px; display:flex; gap:10px; align-items:center;">
+                <button class="btn-save" onclick="saveInfo()">Lưu thay đổi</button>
+                <span id="saveMsg" style="font-size:12px;color:#2d7a52;display:none;">✅ Đã lưu thành công</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Hồ sơ bệnh nhân -->
+    <div id="tab-profiles" style="display:none">
+        <div class="pf-card">
+            <div class="pf-card-title">Danh sách hồ sơ bệnh nhân</div>
+            <div id="profileList"></div>
+            <button class="btn-add" onclick="openProfileModal(null)">+ Thêm hồ sơ người thân</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal thêm/sửa hồ sơ -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+        <div class="modal-title" id="modalTitle">Thêm hồ sơ mới</div>
+        <div class="form-grid">
+            <div class="form-group full">
+                <label class="form-label">Họ và tên người được khám *</label>
+                <input class="form-input" id="mFullName" placeholder="Nhập họ tên đầy đủ" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ngày sinh *</label>
+                <input class="form-input" type="date" id="mDob" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Giới tính *</label>
+                <select class="form-input" id="mGender">
+                    <option value="">-- Chọn --</option>
+                    <option>Nam</option><option>Nữ</option><option>Khác</option>
+                </select>
+            </div>
+            <div class="form-group full">
+                <label class="form-label">Tiền sử bệnh</label>
+                <textarea class="form-input" id="mHistory" rows="3" placeholder="Các bệnh đã mắc, dị ứng thuốc..."></textarea>
+            </div>
+        </div>
+        <div id="modalErr" style="background:#fdecea;border:1px solid #f5c6c6;border-radius:8px;padding:10px;margin-top:12px;font-size:12px;color:#a32d2d;display:none;"></div>
+        <div class="modal-footer">
+            <button class="btn-outline-sm" onclick="closeModal()">Huỷ</button>
+            <button class="btn-save" onclick="saveProfile()">Lưu hồ sơ</button>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+<script type="application/json" id="_userData">@Html.Raw(userJson)</script>
+<script type="application/json" id="_profilesData">@Html.Raw(profilesJson)</script>
+
+@section Scripts {
+<script>
+    var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    var currentProfileId = null;
+
+    // ── Load dữ liệu ─────────────────────────────────────────────
+    try {
+        var user = JSON.parse(document.getElementById('_userData').textContent || '{}');
+        if (user && user.hoTenDem !== undefined) {
+            document.getElementById('hoTenDem').value = user.hoTenDem || '';
+            document.getElementById('ten').value      = user.ten      || '';
+            document.getElementById('phone').value    = user.phone    || '';
+            document.getElementById('email').value    = user.email    || '';
+            document.getElementById('soCCCD').value   = user.soCCCD  || '';
+            document.getElementById('diaChi').value   = user.diaChi  || '';
+            if (user.ngaySinh)
+                document.getElementById('ngaySinh').value = user.ngaySinh.substring(0,10);
+            if (user.gioiTinh) document.getElementById('gioiTinh').value = user.gioiTinh;
+            if (user.nhomMau)  document.getElementById('nhomMau').value  = user.nhomMau;
+        }
+    } catch(e) {}
+
+    try {
+        var profiles = JSON.parse(document.getElementById('_profilesData').textContent || '[]');
+        renderProfiles(Array.isArray(profiles) ? profiles : (profiles?.data || []));
+    } catch(e) { renderProfiles([]); }
+
+    // ── Tab switching ─────────────────────────────────────────────
+    function switchTab(name, btn) {
+        document.getElementById('tab-info').style.display     = name === 'info'     ? '' : 'none';
+        document.getElementById('tab-profiles').style.display = name === 'profiles' ? '' : 'none';
+        document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+    }
+
+    // ── Render profile list ───────────────────────────────────────
+    function renderProfiles(list) {
+        var el = document.getElementById('profileList');
+        if (!list.length) {
+            el.innerHTML = '<div style="text-align:center;padding:20px;color:#7a9bb0;font-size:13px;">Chưa có hồ sơ nào. Hãy thêm hồ sơ của bạn hoặc người thân.</div>';
+            return;
+        }
+        el.innerHTML = list.map(function(p) {
+            var dob = p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString('vi-VN') : '';
+            return '<div class="pt-profile-card">' +
+                '<div>' +
+                    '<div class="pt-profile-name">' + p.fullName + '</div>' +
+                    '<div class="pt-profile-meta">' + (p.gender||'') + (p.age ? ' · ' + p.age + ' tuổi' : '') + (dob ? ' · Sinh: ' + dob : '') +
+                        ' <span class="pt-profile-code">' + (p.recordCode||'') + '</span></div>' +
+                    (p.medicalHistory ? '<div style="font-size:11px;color:#7a9bb0;margin-top:4px;">🏥 ' + p.medicalHistory + '</div>' : '') +
+                '</div>' +
+                '<div style="display:flex;gap:6px;">' +
+                    '<button class="btn-outline-sm" onclick="openProfileModal(' + JSON.stringify(p) + ')">Sửa</button>' +
+                    '<button class="btn-danger-sm" onclick="deleteProfile(' + p.id + ')">Xóa</button>' +
+                '</div>' +
+                '</div>';
+        }).join('');
+    }
+
+    // ── Lưu thông tin cá nhân ─────────────────────────────────────
+    function saveInfo() {
+        var ngaySinh = document.getElementById('ngaySinh').value;
+        var body = {
+            hoTenDem: document.getElementById('hoTenDem').value.trim(),
+            ten:      document.getElementById('ten').value.trim(),
+            phone:    document.getElementById('phone').value.trim(),
+            ngaySinh: ngaySinh || null,
+            gioiTinh: document.getElementById('gioiTinh').value || null,
+            nhomMau:  document.getElementById('nhomMau').value  || null,
+            diaChi:   document.getElementById('diaChi').value.trim()  || null,
+            soCCCD:   document.getElementById('soCCCD').value.trim()  || null
+        };
+        fetch('/Patient/UpdateInfo', {
+            method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':csrfToken},
+            body: JSON.stringify(body)
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                var msg = document.getElementById('saveMsg');
+                msg.style.display = 'inline';
+                setTimeout(function(){ msg.style.display='none'; }, 3000);
+            } else { showToast(d.message||'Lỗi lưu thông tin', false); }
+        }).catch(function(){ showToast('Lỗi kết nối', false); });
+    }
+
+    // ── Profile modal ─────────────────────────────────────────────
+    function openProfileModal(p) {
+        currentProfileId = p ? p.id : null;
+        document.getElementById('modalTitle').textContent = p ? 'Sửa hồ sơ' : 'Thêm hồ sơ mới';
+        document.getElementById('mFullName').value = p ? (p.fullName||'') : '';
+        document.getElementById('mGender').value   = p ? (p.gender||'')   : '';
+        document.getElementById('mHistory').value  = p ? (p.medicalHistory||'') : '';
+        document.getElementById('mDob').value      = p && p.dateOfBirth ? p.dateOfBirth.substring(0,10) : '';
+        document.getElementById('modalErr').style.display = 'none';
+        document.getElementById('profileModal').classList.add('open');
+    }
+    function closeModal() { document.getElementById('profileModal').classList.remove('open'); }
+
+    function saveProfile() {
+        var name = document.getElementById('mFullName').value.trim();
+        var dob  = document.getElementById('mDob').value;
+        var gen  = document.getElementById('mGender').value;
+        var errEl = document.getElementById('modalErr');
+        if (!name) { errEl.textContent='Vui lòng nhập họ tên.'; errEl.style.display='block'; return; }
+        if (!dob)  { errEl.textContent='Vui lòng nhập ngày sinh.'; errEl.style.display='block'; return; }
+        if (!gen)  { errEl.textContent='Vui lòng chọn giới tính.'; errEl.style.display='block'; return; }
+
+        var body = { id: currentProfileId||0, fullName:name, dateOfBirth:dob, gender:gen,
+                     medicalHistory: document.getElementById('mHistory').value.trim()||null };
+        var url = currentProfileId ? '/Patient/UpdatePatientProfile' : '/Patient/CreatePatientProfile';
+        fetch(url, { method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':csrfToken}, body:JSON.stringify(body) })
+        .then(function(r){ return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                closeModal();
+                showToast(currentProfileId ? 'Đã cập nhật hồ sơ.' : 'Đã thêm hồ sơ mới.', true);
+                refreshProfiles();
+            } else { errEl.textContent = d.message||'Lỗi xảy ra.'; errEl.style.display='block'; }
+        }).catch(function(){ errEl.textContent='Lỗi kết nối.'; errEl.style.display='block'; });
+    }
+
+    function deleteProfile(id) {
+        if (!confirm('Xóa hồ sơ này? Không thể hoàn tác.')) return;
+        fetch('/Patient/DeletePatientProfile?id=' + id, { method:'POST', headers:{'RequestVerificationToken':csrfToken} })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if(d.success){ showToast('Đã xóa hồ sơ.',true); refreshProfiles(); } else showToast(d.message,false); });
+    }
+
+    function refreshProfiles() {
+        fetch('/Patient/Profile').then(function(){ location.reload(); });
+    }
+
+    function showToast(msg, ok) {
+        var t = document.getElementById('toast');
+        t.textContent = msg; t.className = 'toast '+(ok?'ok':'err'); t.style.display = 'block';
+        setTimeout(function(){ t.style.display='none'; }, 3000);
+    }
+</script>
+}

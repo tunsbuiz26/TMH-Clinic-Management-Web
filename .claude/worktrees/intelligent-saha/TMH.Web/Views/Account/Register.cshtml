@@ -1,0 +1,232 @@
+@model TMH.Shared.DTOs.RegisterDto
+@{
+    ViewBag.Title = "Đăng ký tài khoản — Phòng Khám Tai Mũi Họng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+.auth-wrap{display:flex;min-height:calc(100vh - 64px);align-items:center;justify-content:center;background:linear-gradient(135deg,#f0f8ff 0%,#fff 60%);padding:40px 20px;}
+.reg-card{display:flex;width:100%;max-width:900px;border-radius:16px;border:1px solid #d4e8f5;overflow:hidden;background:#fff;box-shadow:0 8px 40px rgba(10,77,124,0.08);}
+.reg-left{width:32%;background:#f0f8ff;border-right:1px solid #d4e8f5;padding:36px 24px;display:flex;flex-direction:column;}
+.rl-brand{display:flex;align-items:center;gap:9px;margin-bottom:32px;}
+.rl-icon{width:32px;height:32px;border-radius:9px;background:#0a4d7c;display:flex;align-items:center;justify-content:center;}
+.rl-name{font-family:'Crimson Pro',serif;font-size:15px;font-weight:600;color:#0a4d7c;}
+.rl-name span{color:#c9a227;}
+.steps-lbl{font-size:10px;font-weight:500;color:#7a9bb0;text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px;}
+.step-row{display:flex;align-items:flex-start;gap:11px;padding-bottom:20px;position:relative;}
+.step-row:not(:last-child)::after{content:'';position:absolute;left:12px;top:26px;bottom:0;width:1px;background:#d4e8f5;}
+.step-num{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;margin-top:1px;}
+.step-num.done{background:#0a4d7c;color:#fff;}
+.step-num.cur{background:#fff;color:#1a6fa8;border:2px solid #1a6fa8;}
+.step-num.todo{background:#fff;color:#7a9bb0;border:1px solid #d4e8f5;}
+.step-info strong{display:block;font-size:12px;font-weight:500;color:#0a4d7c;margin-bottom:2px;}
+.step-info span{font-size:11px;color:#7a9bb0;}
+.rl-foot{margin-top:auto;padding-top:16px;border-top:1px solid #d4e8f5;font-size:11px;color:#7a9bb0;}
+.rl-foot a{color:#1a6fa8;text-decoration:none;}
+.gold-note{display:flex;align-items:center;gap:6px;margin-top:10px;background:#fdf3d7;border:1px solid rgba(201,162,39,0.3);border-radius:8px;padding:8px 10px;font-size:11px;color:#8a6210;}
+
+.reg-right{flex:1;padding:36px 34px;overflow-y:auto;}
+.step-panel{display:none;}
+.step-panel.active{display:block;}
+.progress-bar{height:3px;background:#d4e8f5;border-radius:2px;margin-bottom:24px;overflow:hidden;}
+.progress-fill{height:100%;background:#1a6fa8;border-radius:2px;transition:width .4s;}
+.step-eyebrow{font-size:11px;font-weight:500;color:#c9a227;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.step-heading{font-family:'Crimson Pro',serif;font-size:20px;font-weight:600;color:#0a4d7c;margin-bottom:4px;}
+.step-desc{font-size:13px;color:#7a9bb0;margin-bottom:22px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fg-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:4px;}
+.form-label{font-size:11px;font-weight:500;color:#3a5a72;text-transform:uppercase;letter-spacing:.05em;}
+.form-control{height:40px;border:1px solid #d4e8f5;border-radius:9px;padding:0 12px;font-size:13px;color:#0d2d44;background:#fff;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+.form-control:focus{border-color:#1a6fa8;box-shadow:0 0 0 3px rgba(26,111,168,0.09);}
+.field-error{font-size:11px;color:#a32d2d;margin-top:2px;}
+.step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:18px;border-top:1px solid #d4e8f5;}
+.btn-back{height:38px;padding:0 18px;background:transparent;border:1px solid #d4e8f5;border-radius:9px;color:#3a5a72;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-back:hover{background:#f0f8ff;}
+.btn-next{height:38px;padding:0 22px;background:#0a4d7c;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+.btn-next:hover{background:#1a6fa8;}
+.terms-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#3a5a72;line-height:1.6;margin-bottom:16px;}
+.terms-row input{accent-color:#1a6fa8;flex-shrink:0;margin-top:3px;}
+.terms-link{color:#1a6fa8;}
+.validation-summary-main{background:#fcebeb;border:1px solid #f7c1c1;border-radius:9px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#a32d2d;}
+</style>
+
+<div class="auth-wrap">
+<div class="reg-card">
+
+    <!-- Panel trái: bước đăng ký -->
+    <div class="reg-left">
+        <div class="rl-brand">
+            <div class="rl-icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <span class="rl-name">Phòng Khám <span>TMH</span></span>
+        </div>
+
+        <div class="steps-lbl">Các bước đăng ký</div>
+
+        <div class="step-row"><div class="step-num cur" id="sn1">1</div>
+            <div class="step-info"><strong>Thông tin cá nhân</strong><span>Họ tên, ngày sinh, giới tính</span></div>
+        </div>
+        <div class="step-row"><div class="step-num todo" id="sn2">2</div>
+            <div class="step-info"><strong>Liên hệ & định danh</strong><span>SĐT, email, CCCD</span></div>
+        </div>
+        <div class="step-row"><div class="step-num todo" id="sn3">3</div>
+            <div class="step-info"><strong>Tài khoản đăng nhập</strong><span>Tên đăng nhập, mật khẩu</span></div>
+        </div>
+
+        <div class="rl-foot">
+            Đã có tài khoản? <a asp-controller="Account" asp-action="Login">Đăng nhập</a>
+            <div class="gold-note">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.2 2.8H10l-2.2 1.7 0.8 2.8L6 7l-2.6 1.3 0.8-2.8L2 3.8h2.8z" stroke="#c9a227" stroke-width="1" stroke-linejoin="round"/></svg>
+                Thông tin được mã hoá và bảo mật theo chuẩn y tế
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel phải: form đa bước -->
+    <div class="reg-right">
+        <div class="progress-bar"><div class="progress-fill" id="prog" style="width:33%"></div></div>
+
+        <!--
+            Form bao bọc toàn bộ 3 bước.
+            Dữ liệu của tất cả bước được gửi cùng lúc khi bấm "Hoàn tất đăng ký".
+            Mỗi bước chỉ hiện/ẩn bằng CSS — không POST riêng từng bước.
+        -->
+        <form asp-action="Register" asp-controller="Account" method="post" id="regForm">
+            @Html.AntiForgeryToken()
+
+            @* Validation summary chỉ hiện khi server trả về lỗi *@
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="validation-summary-main">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+
+            <!-- ===== BƯỚC 1: Thông tin cá nhân ===== -->
+            <div class="step-panel active" id="step1">
+                <div class="step-eyebrow">Bước 1 / 3</div>
+                <div class="step-heading">Thông tin cá nhân</div>
+                <div class="step-desc">Thông tin này sẽ dùng để lập hồ sơ bệnh nhân của bạn</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" asp-for="HoTenDem">Họ và tên đệm</label>
+                        <input asp-for="HoTenDem" class="form-control" placeholder="Nguyễn Văn" />
+                        <span asp-validation-for="HoTenDem" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" asp-for="Ten">Tên</label>
+                        <input asp-for="Ten" class="form-control" placeholder="An" />
+                        <span asp-validation-for="Ten" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" asp-for="NgaySinh">Ngày sinh</label>
+                        <input asp-for="NgaySinh" class="form-control" type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" asp-for="GioiTinh">Giới tính</label>
+                        <select asp-for="GioiTinh" class="form-control">
+                            <option value="">-- Chọn --</option>
+                            <option>Nam</option><option>Nữ</option><option>Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group fg-full">
+                        <label class="form-label" asp-for="NhomMau">Nhóm máu</label>
+                        <select asp-for="NhomMau" class="form-control">
+                            <option value="">-- Chọn nếu biết --</option>
+                            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="step-nav">
+                    <span style="font-size:12px;color:#7a9bb0">Tất cả thông tin được bảo mật</span>
+                    <button type="button" class="btn-next" onclick="goStep(2)">Tiếp theo →</button>
+                </div>
+            </div>
+
+            <!-- ===== BƯỚC 2: Liên hệ & định danh ===== -->
+            <div class="step-panel" id="step2">
+                <div class="step-eyebrow">Bước 2 / 3</div>
+                <div class="step-heading">Liên hệ & Định danh</div>
+                <div class="step-desc">Thông tin dùng để xác minh danh tính và liên lạc khi cần</div>
+                <div class="form-group">
+                    <label class="form-label" asp-for="Phone">Số điện thoại</label>
+                    <input asp-for="Phone" class="form-control" placeholder="0901 234 567" />
+                    <span asp-validation-for="Phone" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" asp-for="Email">Địa chỉ Email</label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="your@email.com" />
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" asp-for="SoCCCD">Số CCCD / CMND</label>
+                    <input asp-for="SoCCCD" class="form-control" placeholder="0xxxxxxxxx (12 chữ số)" />
+                    <span asp-validation-for="SoCCCD" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" asp-for="DiaChi">Địa chỉ thường trú</label>
+                    <input asp-for="DiaChi" class="form-control" placeholder="Số nhà, đường, phường, quận, tỉnh/thành" />
+                </div>
+                <div class="step-nav">
+                    <button type="button" class="btn-back" onclick="goStep(1)">← Quay lại</button>
+                    <button type="button" class="btn-next" onclick="goStep(3)">Tiếp theo →</button>
+                </div>
+            </div>
+
+            <!-- ===== BƯỚC 3: Tài khoản đăng nhập ===== -->
+            <div class="step-panel" id="step3">
+                <div class="step-eyebrow">Bước 3 / 3</div>
+                <div class="step-heading">Tạo tài khoản đăng nhập</div>
+                <div class="step-desc">Tài khoản dùng để đăng nhập vào hệ thống bệnh nhân trực tuyến</div>
+                <div class="form-group">
+                    <label class="form-label" asp-for="Username">Tên đăng nhập</label>
+                    <input asp-for="Username" class="form-control" placeholder="vd: nguyenvanan" />
+                    <span asp-validation-for="Username" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" asp-for="Password">Mật khẩu</label>
+                    <input asp-for="Password" class="form-control" type="password" placeholder="••••••••" />
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" asp-for="ConfirmPassword">Xác nhận mật khẩu</label>
+                    <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="••••••••" />
+                    <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+                </div>
+                <div class="terms-row">
+                    <input type="checkbox" id="chk-terms" required>
+                    <label for="chk-terms">
+                        Tôi đồng ý với <a class="terms-link" href="#">Điều khoản sử dụng</a>
+                        và <a class="terms-link" href="#">Chính sách bảo mật</a> của hệ thống
+                    </label>
+                </div>
+                <div class="step-nav">
+                    <button type="button" class="btn-back" onclick="goStep(2)">← Quay lại</button>
+                    <button type="submit" class="btn-next">Hoàn tất đăng ký ✓</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+</div>
+
+<script>
+var cur = 1;
+function goStep(n) {
+    document.getElementById('step' + cur).classList.remove('active');
+    cur = n;
+    document.getElementById('step' + n).classList.add('active');
+    document.getElementById('prog').style.width = (n * 33) + '%';
+    [1,2,3].forEach(function(i) {
+        var el = document.getElementById('sn' + i);
+        el.className = 'step-num ' + (i < n ? 'done' : i === n ? 'cur' : 'todo');
+        el.textContent = i < n ? '✓' : i;
+    });
+}
+</script>

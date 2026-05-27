@@ -1,0 +1,576 @@
+@{
+    ViewBag.Title = "Bác sĩ — Phòng Khám Tai Mũi Họng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+<style>
+/* ===== PAGE HERO ===== */
+.page-hero {
+    background: linear-gradient(135deg,#f0f8ff 0%,#fff 60%);
+    padding: 56px 40px 48px;
+    position: relative; overflow: hidden;
+    border-bottom: 1px solid #d4e8f5;
+}
+.page-hero::before {
+    content:''; position:absolute; right:-80px; top:-80px;
+    width:320px; height:320px; border-radius:50%;
+    background:rgba(26,111,168,0.06); pointer-events:none;
+}
+.page-hero::after {
+    content:''; position:absolute; left:60px; bottom:-60px;
+    width:180px; height:180px; border-radius:50%;
+    background:rgba(201,162,39,0.07); pointer-events:none;
+}
+.page-hero-inner { max-width:680px; position:relative; z-index:1; }
+.page-breadcrumb {
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; color:#7a9bb0; margin-bottom:16px;
+}
+.page-breadcrumb a { color:#1a6fa8; text-decoration:none; }
+.page-breadcrumb a:hover { text-decoration:underline; }
+.page-breadcrumb-sep { color:#b0c8db; }
+.page-tag {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#e8f4fd; color:#1a6fa8;
+    border:1px solid rgba(26,111,168,0.25);
+    border-radius:20px; padding:4px 12px;
+    font-size:11px; font-weight:500;
+    letter-spacing:.05em; text-transform:uppercase;
+    margin-bottom:14px;
+}
+.page-title {
+    font-family:'Crimson Pro',serif;
+    font-size:38px; font-weight:600;
+    color:#0a4d7c; line-height:1.2; margin-bottom:12px;
+}
+.page-title em { color:#c9a227; font-style:normal; }
+.page-desc { font-size:14px; color:#3a5a72; line-height:1.7; max-width:560px; }
+
+/* ===== SYMPTOM CARDS ===== */
+.symptom-section {
+    background:#fffbef;
+    border-top:1px solid rgba(201,162,39,.15);
+    border-bottom:1px solid rgba(201,162,39,.15);
+    padding:44px 40px;
+}
+.symptom-header { margin-bottom:28px; }
+.symptom-tag {
+    display:inline-block; background:#fdf3d7; color:#c9a227;
+    font-size:11px; font-weight:500; padding:4px 12px;
+    border-radius:20px; letter-spacing:.05em; text-transform:uppercase;
+    margin-bottom:10px;
+}
+.symptom-title {
+    font-family:'Crimson Pro',serif; font-size:28px;
+    font-weight:600; color:#0a4d7c; margin-bottom:6px;
+}
+.symptom-sub { font-size:13px; color:#7a9bb0; }
+.symptom-grid {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+}
+.symptom-card {
+    background:#fff; border:1px solid rgba(201,162,39,.25);
+    border-radius:14px; padding:22px 16px; text-align:center;
+    cursor:pointer; transition:all .2s;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    text-decoration:none; color:inherit;
+}
+.symptom-card:hover {
+    border-color:#c9a227; transform:translateY(-3px);
+    box-shadow:0 8px 24px rgba(201,162,39,.15);
+}
+.symptom-icon { font-size:32px; line-height:1; }
+.symptom-name { font-size:13px; font-weight:600; color:#0a4d7c; }
+.symptom-hint { font-size:11px; color:#7a9bb0; line-height:1.5; }
+.symptom-cta {
+    display:inline-flex; align-items:center; gap:5px;
+    margin-top:4px; font-size:11px; font-weight:500;
+    color:#c9a227; background:#fdf3d7;
+    padding:3px 10px; border-radius:20px;
+}
+
+/* ===== SECTION ===== */
+.section { padding:52px 40px; }
+.section-tag {
+    display:inline-block; background:#e8f4fd; color:#1a6fa8;
+    font-size:11px; font-weight:500; padding:4px 12px;
+    border-radius:20px; letter-spacing:.05em; text-transform:uppercase;
+    margin-bottom:10px;
+}
+.section-title {
+    font-family:'Crimson Pro',serif; font-size:28px;
+    font-weight:600; color:#0a4d7c; margin-bottom:6px;
+}
+.section-sub { font-size:13px; color:#7a9bb0; margin-bottom:32px; }
+
+/* SORT BAR */
+.sort-bar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:24px; flex-wrap:wrap; gap:12px;
+}
+.sort-left { display:flex; align-items:center; gap:8px; }
+.sort-label { font-size:12px; color:#7a9bb0; }
+.sort-select {
+    height:32px; padding:0 12px; border-radius:8px;
+    border:1px solid #d4e8f5; background:#fff;
+    font-family:'DM Sans',sans-serif; font-size:12px; color:#0d2d44;
+    outline:none; cursor:pointer;
+}
+.sort-select:focus { border-color:#1a6fa8; }
+.result-count { font-size:12px; color:#7a9bb0; }
+
+/* ===== DOCTOR CARDS ===== */
+.doctors-grid-main {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+}
+.doc-card-full {
+    background:#fff; border:1px solid #d4e8f5; border-radius:16px;
+    overflow:hidden; transition:all .25s; display:flex; flex-direction:column;
+}
+.doc-card-full:hover { box-shadow:0 10px 32px rgba(10,77,124,.12); transform:translateY(-3px); }
+
+.doc-card-header {
+    padding:28px 20px 20px;
+    background:linear-gradient(145deg,#0a4d7c 0%,#1a6fa8 100%);
+    text-align:center; position:relative;
+}
+.doc-avt-full {
+    width:76px; height:76px; border-radius:50%;
+    background:rgba(255,255,255,.12); border:3px solid rgba(255,255,255,.2);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Crimson Pro',serif; font-size:26px; font-weight:600;
+    color:#fff; margin:0 auto 12px; overflow:hidden;
+}
+.doc-avt-full img { width:100%; height:100%; object-fit:cover; }
+.doc-name-full { font-size:15px; font-weight:600; color:#fff; margin-bottom:3px; }
+.doc-degree-chip {
+    display:inline-block;
+    background:rgba(201,162,39,.2); border:1px solid rgba(201,162,39,.4);
+    color:#f5d87a; font-size:10px; font-weight:600;
+    padding:2px 10px; border-radius:20px; letter-spacing:.04em;
+}
+.doc-stars-row {
+    display:flex; align-items:center; justify-content:center;
+    gap:5px; margin-top:10px;
+}
+.stars { color:#f59e0b; font-size:13px; letter-spacing:1px; }
+.star-val { font-size:13px; font-weight:700; color:#fff; }
+.star-cnt { font-size:11px; color:rgba(255,255,255,.5); }
+.doc-avail-row {
+    margin-top:8px;
+    display:flex; align-items:center; justify-content:center;
+    gap:5px; font-size:11px; font-weight:500;
+}
+.avail-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+
+.doc-card-body { padding:18px 18px 0; flex:1; display:flex; flex-direction:column; }
+.doc-meta-list { display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
+.doc-meta-row {
+    display:flex; align-items:flex-start; gap:8px;
+    font-size:12px; color:#3a5a72; line-height:1.5;
+}
+.doc-meta-icon { flex-shrink:0; width:16px; text-align:center; }
+.doc-card-desc {
+    font-size:12px; color:#7a9bb0; line-height:1.6;
+    margin-bottom:14px; flex:1;
+}
+
+/* Slots */
+.slot-section { margin-bottom:14px; }
+.slot-label {
+    font-size:10px; font-weight:600; color:#3a5a72;
+    letter-spacing:.05em; text-transform:uppercase; margin-bottom:7px;
+    display:flex; align-items:center; gap:6px;
+}
+.slot-chips { display:flex; flex-wrap:wrap; gap:5px; min-height:28px; }
+.slot-chip {
+    height:26px; padding:0 10px; border-radius:6px;
+    font-size:11px; font-weight:500; cursor:pointer;
+    background:#e8f4fd; color:#1a6fa8;
+    border:1px solid rgba(26,111,168,.15);
+    font-family:'DM Sans',sans-serif; transition:all .15s;
+}
+.slot-chip:hover { background:#0a4d7c; color:#fff; border-color:#0a4d7c; }
+.slot-chip.unavail { background:#f5f5f5; color:#b0c8db; cursor:not-allowed; border-color:#e8e8e8; }
+.slot-loading { font-size:11px; color:#b0c8db; font-style:italic; }
+.slot-empty { font-size:11px; color:#b0c8db; }
+
+.btn-book-full {
+    display:flex; align-items:center; justify-content:center;
+    height:38px; border-radius:0 0 14px 14px;
+    background:#e8f4fd; color:#0a4d7c;
+    border:none; border-top:1px solid #d4e8f5;
+    font-size:13px; font-weight:500; cursor:pointer;
+    font-family:'DM Sans',sans-serif; text-decoration:none;
+    transition:all .15s; margin-top:auto;
+}
+.btn-book-full:hover { background:#0a4d7c; color:#fff; }
+
+/* Skeleton loading */
+.doc-skeleton {
+    border-radius:16px; overflow:hidden; border:1px solid #e8f2fa;
+    display:flex; flex-direction:column;
+}
+.sk-header { height:160px; background:#e8f2fa; }
+.sk-body { padding:18px; display:flex; flex-direction:column; gap:10px; }
+.sk-line { border-radius:6px; background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
+@@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ===== CTA ===== */
+.cta-strip {
+    background:linear-gradient(135deg,#c9a227 0%,#e0b93a 100%);
+    padding:48px 40px; text-align:center;
+}
+.cta-title { font-family:'Crimson Pro',serif; font-size:28px; font-weight:600; color:#fff; margin-bottom:10px; }
+.cta-desc { font-size:14px; color:rgba(255,255,255,.85); margin-bottom:28px; line-height:1.65; }
+.btn-cta {
+    display:inline-flex; align-items:center; gap:8px;
+    height:44px; padding:0 28px; border-radius:10px;
+    background:#0a4d7c; color:#fff; font-size:14px; font-weight:500;
+    text-decoration:none; font-family:'DM Sans',sans-serif;
+    transition:background .15s; cursor:pointer; border:none;
+}
+.btn-cta:hover { background:#1a6fa8; }
+
+@@media(max-width:900px){
+    .doctors-grid-main { grid-template-columns:1fr; }
+    .symptom-grid { grid-template-columns:repeat(2,1fr); }
+    .page-hero,.section,.symptom-section { padding-left:20px; padding-right:20px; }
+}
+</style>
+}
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div class="page-breadcrumb">
+            <a href="/">Trang chủ</a>
+            <span class="page-breadcrumb-sep">/</span>
+            <span>Đội ngũ bác sĩ</span>
+        </div>
+        <div class="page-tag">⚕️ Chuyên gia TMH</div>
+        <h1 class="page-title">Đội ngũ bác sĩ<br>chuyên khoa <em>Tai · Mũi · Họng</em></h1>
+        <p class="page-desc">Chọn bác sĩ phù hợp theo bằng cấp và kinh nghiệm, hoặc mô tả triệu chứng với trợ lý AI của chúng tôi để được tư vấn nhanh.</p>
+    </div>
+</section>
+
+<!-- TRIỆU CHỨNG THƯỜNG GẶP — bấm mở chatbot -->
+<section class="symptom-section">
+    <div class="symptom-header">
+        <div class="symptom-tag">Triệu chứng thường gặp</div>
+        <div class="symptom-title">Bạn đang gặp vấn đề gì?</div>
+        <div class="symptom-sub">Chọn triệu chứng để được tư vấn và đặt lịch khám phù hợp</div>
+    </div>
+    <div class="symptom-grid">
+        <a class="symptom-card" href="#" onclick="openChatWithSymptom('Tôi bị ù tai và nghe kém'); return false;">
+            <div class="symptom-icon">👂</div>
+            <div class="symptom-name">Ù tai · Nghe kém</div>
+            <div class="symptom-hint">Tiếng vo, tiếng veo veo trong tai, nghe không rõ</div>
+            <span class="symptom-cta">💬 Tư vấn ngay</span>
+        </a>
+        <a class="symptom-card" href="#" onclick="openChatWithSymptom('Tôi bị nghẹt mũi và viêm xoang'); return false;">
+            <div class="symptom-icon">🤧</div>
+            <div class="symptom-name">Nghẹt mũi · Viêm xoang</div>
+            <div class="symptom-hint">Chảy nước mũi, đau đầu, đau vùng mặt</div>
+            <span class="symptom-cta">💬 Tư vấn ngay</span>
+        </a>
+        <a class="symptom-card" href="#" onclick="openChatWithSymptom('Tôi bị đau họng và khàn tiếng'); return false;">
+            <div class="symptom-icon">🗣️</div>
+            <div class="symptom-name">Đau họng · Khàn tiếng</div>
+            <div class="symptom-hint">Nuốt đau, rát họng, giọng khàn kéo dài</div>
+            <span class="symptom-cta">💬 Tư vấn ngay</span>
+        </a>
+        <a class="symptom-card" href="#" onclick="openChatWithSymptom('Tôi bị chóng mặt và mất thăng bằng'); return false;">
+            <div class="symptom-icon">🌀</div>
+            <div class="symptom-name">Chóng mặt · Mất thăng bằng</div>
+            <div class="symptom-hint">Cảm giác quay cuồng, buồn nôn, đi không vững</div>
+            <span class="symptom-cta">💬 Tư vấn ngay</span>
+        </a>
+    </div>
+</section>
+
+<!-- DOCTORS LIST -->
+<section class="section">
+    <div class="section-tag">Đội ngũ y tế</div>
+    <div class="section-title">Bác sĩ chuyên khoa TMH</div>
+    <div class="section-sub">Toàn bộ bác sĩ đang nhận lịch — lịch trống được cập nhật từ hệ thống</div>
+
+    <div class="sort-bar">
+        <div class="sort-left">
+            <span class="sort-label">Sắp xếp theo:</span>
+            <select class="sort-select" onchange="sortDocs(this.value)">
+                <option value="rating">Đánh giá cao nhất</option>
+                <option value="exp">Kinh nghiệm nhiều nhất</option>
+                <option value="degree">Bằng cấp cao nhất</option>
+            </select>
+        </div>
+        <span class="result-count" id="result-count">Đang tải...</span>
+    </div>
+
+    <div class="doctors-grid-main" id="doctors-grid">
+        <!-- Skeleton placeholders -->
+        <div class="doc-skeleton">
+            <div class="sk-header"></div>
+            <div class="sk-body">
+                <div class="sk-line" style="height:14px;width:70%"></div>
+                <div class="sk-line" style="height:12px;width:50%"></div>
+                <div class="sk-line" style="height:12px;width:90%"></div>
+                <div class="sk-line" style="height:26px;margin-top:8px"></div>
+            </div>
+        </div>
+        <div class="doc-skeleton">
+            <div class="sk-header"></div>
+            <div class="sk-body">
+                <div class="sk-line" style="height:14px;width:60%"></div>
+                <div class="sk-line" style="height:12px;width:45%"></div>
+                <div class="sk-line" style="height:12px;width:85%"></div>
+                <div class="sk-line" style="height:26px;margin-top:8px"></div>
+            </div>
+        </div>
+        <div class="doc-skeleton">
+            <div class="sk-header"></div>
+            <div class="sk-body">
+                <div class="sk-line" style="height:14px;width:65%"></div>
+                <div class="sk-line" style="height:12px;width:55%"></div>
+                <div class="sk-line" style="height:12px;width:80%"></div>
+                <div class="sk-line" style="height:26px;margin-top:8px"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-strip">
+    <div class="cta-title">Không biết nên chọn bác sĩ nào?</div>
+    <p class="cta-desc">Hãy mô tả triệu chứng với trợ lý AI của chúng tôi — tư vấn ngay lập tức, hoàn toàn miễn phí.</p>
+    <button class="btn-cta" onclick="openChatWithSymptom('Tôi cần tư vấn bác sĩ tai mũi họng')">💬 Nhắn tin với AI ngay</button>
+</section>
+
+@section Scripts {
+<script>
+(function () {
+
+    // Bảng màu avatar theo index
+    var AVATAR_COLORS = [
+        'linear-gradient(135deg,#0a4d7c,#1a6fa8)',
+        'linear-gradient(135deg,#c9a227,#e0b93a)',
+        'linear-gradient(135deg,#1a6fa8,#2a8fd8)',
+        'linear-gradient(135deg,#2d7a52,#3aaa6a)',
+        'linear-gradient(135deg,#7b4fa8,#a06fd8)',
+        'linear-gradient(135deg,#c94040,#e06060)',
+    ];
+
+    // Map bằng cấp → chữ hiển thị và điểm sort
+    var DEGREE_MAP = {
+        'GS': { label:'Giáo sư', rank:5 },
+        'PGS': { label:'Phó Giáo sư', rank:4 },
+        'TS': { label:'Tiến sĩ Y khoa', rank:3 },
+        'ThS': { label:'Thạc sĩ', rank:2 },
+        'CKII': { label:'Chuyên khoa II', rank:2 },
+        'CKI':  { label:'Chuyên khoa I', rank:1 },
+        'BS':   { label:'Bác sĩ', rank:0 },
+    };
+
+    function getDegreeInfo(fullName, degreeRaw) {
+        // Ưu tiên field Degree từ DTO nếu có
+        if (degreeRaw) {
+            for (var key of Object.keys(DEGREE_MAP)) {
+                if (degreeRaw === key || degreeRaw.toUpperCase() === key) return DEGREE_MAP[key];
+            }
+            // Nếu không khớp prefix, trả về label nguyên
+            return { label: degreeRaw, rank: 1 };
+        }
+        // Fallback: parse từ tên
+        for (var prefix of Object.keys(DEGREE_MAP)) {
+            if (fullName && fullName.startsWith(prefix + '.')) return DEGREE_MAP[prefix];
+        }
+        return { label:'Bác sĩ', rank:0 };
+    }
+
+    function getInitials(name) {
+        // Lấy 2 chữ cái đầu của tên (bỏ học hàm phía trước)
+        var clean = name.replace(/^(GS|PGS|TS|ThS|CKII|CKI|BS)\.(BS\.)?\s*/i, '').trim();
+        var parts = clean.split(' ');
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+        return clean.slice(0,2).toUpperCase();
+    }
+
+    function formatSlotDate(dateStr) {
+        var d = new Date(dateStr);
+        var days = ['CN','T2','T3','T4','T5','T6','T7'];
+        var h = d.getHours().toString().padStart(2,'0');
+        var m = d.getMinutes().toString().padStart(2,'0');
+        return days[d.getDay()] + ', ' + h + ':' + m;
+    }
+
+    function renderStars(rating) {
+        if (!rating) return '';
+        var full = Math.round(rating);
+        return '★'.repeat(full) + '☆'.repeat(5-full);
+    }
+
+    function buildCard(doc, index) {
+        // === Field names khớp DoctorScheduleDto ===
+        // doc.DoctorId | doc.FullName | doc.Degree | doc.Specialty
+        // doc.AverageRating | doc.ReviewCount | doc.AvailableSlots[]
+        // slot: { WorkDate, StartTime, EndTime, RemainingSlots, IsFull }
+
+        var fullName  = doc.FullName  || doc.fullName  || doc.DoctorName || doc.doctorName || '';
+        var degreeRaw = doc.Degree    || doc.degree    || '';
+        var specialty = doc.Specialty || doc.specialty || 'Tai Mũi Họng';
+        var docId     = doc.DoctorId  || doc.doctorId  || doc.Id || doc.id;
+        var rating    = doc.AverageRating || doc.averageRating || 0;
+        var reviewCnt = doc.ReviewCount   || doc.reviewCount   || 0;
+        var slots     = doc.AvailableSlots || doc.availableSlots || [];
+        var description = doc.Description || doc.description || '';
+
+        var degInfo  = getDegreeInfo(fullName, degreeRaw);
+        var initials = getInitials(fullName);
+        var color    = AVATAR_COLORS[index % AVATAR_COLORS.length];
+
+        // Availability dot
+        var hasSlot      = slots.some(function(s){ return !(s.IsFull || s.isFull); });
+        var dotColor     = hasSlot ? '#3aaa6a' : '#e0b93a';
+        var dotText      = hasSlot ? 'Còn lịch tuần này' : 'Chưa có lịch trống';
+        var dotTextColor = hasSlot ? '#9fdfbe' : '#f5d87a';
+
+        // Slot chips — dùng WorkDate + StartTime
+        var slotHtml = '';
+        var validSlots = slots.filter(function(s){ return !(s.IsFull || s.isFull); });
+        if (validSlots.length === 0) {
+            slotHtml = '<span class="slot-empty">Chưa có lịch trống trong tuần</span>';
+        } else {
+            validSlots.slice(0, 5).forEach(function(s) {
+                var dateStr = s.WorkDate || s.workDate || '';
+                var timeStr = s.StartTime || s.startTime || '';
+                var label;
+                if (dateStr) {
+                    var d = new Date(dateStr);
+                    var days = ['CN','T2','T3','T4','T5','T6','T7'];
+                    var t = timeStr.slice(0, 5); // "08:00"
+                    label = days[d.getDay()] + ' ' + (d.getDate()) + '/' + (d.getMonth()+1) + ', ' + t;
+                } else {
+                    label = timeStr.slice(0,5);
+                }
+                slotHtml += '<span class="slot-chip" onclick="selectSlot(this)">' + label + '</span>';
+            });
+            if (validSlots.length > 5) {
+                slotHtml += '<span class="slot-chip" style="background:#f7fafd;color:#7a9bb0;cursor:default">+'+(validSlots.length-5)+' ca</span>';
+            }
+        }
+
+        var isLoggedIn = @(ViewBag.IsLoggedIn == true ? "true" : "false");
+        var bookLink = isLoggedIn
+            ? '/Booking/Index?doctorId=' + docId
+            : '/Account/Login?returnUrl=/Booking/Index?doctorId=' + docId;
+
+        return '<div class="doc-card-full"'
+            + ' data-rating="' + rating + '"'
+            + ' data-exp="0"'
+            + ' data-degree="' + degInfo.rank + '"'
+            + ' id="doc-' + docId + '">'
+            + '<div class="doc-card-header">'
+            + '<div class="doc-avt-full" style="background:' + color + '">' + initials + '</div>'
+            + '<div class="doc-name-full">' + (fullName || 'Bác sĩ') + '</div>'
+            + '<span class="doc-degree-chip">' + degInfo.label + '</span>'
+            + (rating > 0
+                ? '<div class="doc-stars-row">'
+                  + '<span class="stars">' + renderStars(rating) + '</span>'
+                  + '<span class="star-val">' + rating.toFixed(1) + '</span>'
+                  + '<span class="star-cnt">(' + reviewCnt + ' lượt)</span>'
+                  + '</div>'
+                : '')
+            + '<div class="doc-avail-row">'
+            + '<span class="avail-dot" style="background:' + dotColor + '"></span>'
+            + '<span style="color:' + dotTextColor + ';font-size:11px;">' + dotText + '</span>'
+            + '</div>'
+            + '</div>'
+            + '<div class="doc-card-body">'
+            + '<div class="doc-meta-list">'
+            + '<div class="doc-meta-row"><span class="doc-meta-icon">🏥</span>Chuyên khoa: ' + specialty + '</div>'
+            + (description ? '<div class="doc-meta-row"><span class="doc-meta-icon">📋</span>' + description + '</div>' : '')
+            + '</div>'
+            + '<div class="slot-section">'
+            + '<div class="slot-label">📅 Lịch trống tuần này</div>'
+            + '<div class="slot-chips">' + slotHtml + '</div>'
+            + '</div>'
+            + '</div>'
+            + '<a href="' + bookLink + '" class="btn-book-full">📅 Đặt lịch khám</a>'
+            + '</div>';
+    }
+
+    // ── Tải danh sách bác sĩ từ DB ──────────────────────────────────
+    function loadDoctors() {
+        fetch('/Booking/GetDoctorsJson')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var grid = document.getElementById('doctors-grid');
+                var count = document.getElementById('result-count');
+                if (!data || data.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#7a9bb0;">Chưa có bác sĩ nào đang nhận lịch.</div>';
+                    count.textContent = '0 bác sĩ';
+                    return;
+                }
+                var html = '';
+                data.forEach(function(doc, i) { html += buildCard(doc, i); });
+                grid.innerHTML = html;
+                count.textContent = data.length + ' bác sĩ';
+            })
+            .catch(function() {
+                var grid = document.getElementById('doctors-grid');
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#e74c3c;">Không thể tải danh sách bác sĩ. Vui lòng thử lại.</div>';
+                document.getElementById('result-count').textContent = '';
+            });
+    }
+
+    loadDoctors();
+
+    // ── Sắp xếp ─────────────────────────────────────────────────────
+    window.sortDocs = function(by) {
+        var grid = document.getElementById('doctors-grid');
+        var cards = Array.from(grid.querySelectorAll('.doc-card-full'));
+        if (cards.length === 0) return;
+        cards.sort(function(a, b) {
+            if (by === 'rating') return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
+            if (by === 'exp')    return parseInt(b.dataset.exp)    - parseInt(a.dataset.exp);
+            if (by === 'degree') return parseInt(b.dataset.degree) - parseInt(a.dataset.degree);
+        });
+        cards.forEach(function(c) { grid.appendChild(c); });
+    };
+
+    // ── Chọn slot ────────────────────────────────────────────────────
+    window.selectSlot = function(el) {
+        el.closest('.slot-chips').querySelectorAll('.slot-chip')
+          .forEach(function(c) { c.classList.remove('selected'); });
+        el.classList.add('selected');
+    };
+
+    // ── Mở chatbot góc phải kèm tin nhắn gợi ý ──────────────────────
+    window.openChatWithSymptom = function(msg) {
+        // Tìm nút toggle chatbot (tmhToggle được khai báo trong _Layout hoặc chatbot widget)
+        if (typeof tmhToggle === 'function') {
+            tmhToggle();
+        } else {
+            // Fallback: click nút toggle nổi nếu có
+            var toggleBtn = document.querySelector('#tmh-chat-toggle, .chat-fab, [data-chat-toggle]');
+            if (toggleBtn) toggleBtn.click();
+        }
+        // Điền tin nhắn vào ô chat sau khi chatbot mở
+        setTimeout(function() {
+            if (typeof tmhQuick === 'function') {
+                tmhQuick(msg);
+            } else {
+                var input = document.querySelector('#tmh-chat-input, .chat-input, [data-chat-input]');
+                if (input) {
+                    input.value = msg;
+                    input.focus();
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        }, 380);
+    };
+
+})();
+</script>
+}

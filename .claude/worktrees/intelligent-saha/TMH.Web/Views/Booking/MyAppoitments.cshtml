@@ -1,0 +1,402 @@
+﻿@model List<TMH.Shared.DTOs.AppointmentDetailDto>
+@{
+    ViewBag.Title = "Lịch khám của tôi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .apt-wrap {
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .apt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+    }
+
+    .apt-title {
+        font-family: 'Crimson Pro', serif;
+        font-size: 28px;
+        font-weight: 600;
+        color: #0a4d7c;
+    }
+
+    .btn-new {
+        height: 40px;
+        padding: 0 20px;
+        background: #0a4d7c;
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-new:hover {
+            background: #1a6fa8;
+            color: #fff;
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7a9bb0;
+    }
+
+    .empty-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: .4;
+    }
+
+    .empty-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #3a5a72;
+    }
+
+    .empty-sub {
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+
+    .apt-card {
+        background: #fff;
+        border: 1px solid #d4e8f5;
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-bottom: 14px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+        .apt-card:hover {
+            border-color: #1a6fa8;
+        }
+
+    .apt-date-col {
+        text-align: center;
+        min-width: 60px;
+        background: #f0f8ff;
+        border-radius: 10px;
+        padding: 10px 8px;
+    }
+
+    .apt-day {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0a4d7c;
+        line-height: 1;
+    }
+
+    .apt-month {
+        font-size: 11px;
+        color: #7a9bb0;
+        margin-top: 2px;
+    }
+
+    .apt-body {
+        flex: 1;
+    }
+
+    .apt-doctor {
+        font-size: 15px;
+        font-weight: 500;
+        color: #0a4d7c;
+        margin-bottom: 2px;
+    }
+
+    .apt-spec {
+        font-size: 12px;
+        color: #c9a227;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    .apt-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 12px;
+        color: #7a9bb0;
+        margin-bottom: 8px;
+    }
+
+        .apt-meta span::before {
+            margin-right: 4px;
+        }
+
+    .apt-code {
+        font-family: monospace;
+        font-size: 11px;
+        background: #f0f8ff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #1a6fa8;
+    }
+
+    .apt-note {
+        font-size: 12px;
+        color: #555;
+        background: #fafafa;
+        border-left: 3px solid #d4e8f5;
+        padding: 6px 10px;
+        border-radius: 0 6px 6px 0;
+        margin-top: 6px;
+    }
+
+    .apt-diag {
+        font-size: 12px;
+        color: #2d7a52;
+        background: #f0faf4;
+        border-left: 3px solid #2d7a52;
+        padding: 6px 10px;
+        border-radius: 0 6px 6px 0;
+        margin-top: 6px;
+    }
+
+    .apt-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end;
+        min-width: 110px;
+    }
+
+    /* Status badges */
+    .badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 500;
+        padding: 3px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .badge-cho {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-xacnhan {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-den {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .badge-kham {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-hoan {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .badge-huy {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-vang {
+        background: #fdecea;
+        color: #a32d2d;
+    }
+
+    .btn-cancel {
+        font-size: 12px;
+        color: #c0392b;
+        background: none;
+        border: 1px solid #f5c6c6;
+        border-radius: 7px;
+        padding: 5px 12px;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .btn-cancel:hover {
+            background: #fdecea;
+        }
+
+    .btn-book-again {
+        font-size: 12px;
+        color: #1a6fa8;
+        background: none;
+        border: 1px solid #d4e8f5;
+        border-radius: 7px;
+        padding: 5px 12px;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+
+        .btn-book-again:hover {
+            background: #f0f8ff;
+        }
+
+    .filter-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        height: 32px;
+        padding: 0 14px;
+        border: 1px solid #d4e8f5;
+        border-radius: 20px;
+        font-size: 12px;
+        color: #3a5a72;
+        background: #fff;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .filter-btn.active {
+            background: #0a4d7c;
+            color: #fff;
+            border-color: #0a4d7c;
+        }
+</style>
+
+<div class="apt-wrap">
+    <div class="apt-header">
+        <div class="apt-title">Lịch khám của tôi</div>
+        <a asp-controller="Booking" asp-action="Index" class="btn-new">+ Đặt lịch mới</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#2d7a52;font-size:13px;">
+            ✅ @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background:#fdecea;border:1px solid #f5c6c6;border-radius:10px;padding:14px 18px;margin-bottom:18px;color:#c0392b;font-size:13px;">
+            ❌ @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📅</div>
+            <div class="empty-title">Chưa có lịch khám nào</div>
+            <div class="empty-sub">Bạn chưa đặt lịch khám nào. Hãy đặt lịch ngay!</div>
+            <a asp-controller="Booking" asp-action="Index" class="btn-new" style="display:inline-flex;margin:0 auto;">Đặt lịch khám ngay</a>
+        </div>
+    }
+    else
+    {
+        <!-- Filter bar -->
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterStatus('all', this)">Tất cả (@Model.Count)</button>
+            <button class="filter-btn" onclick="filterStatus('upcoming', this)">Sắp tới</button>
+            <button class="filter-btn" onclick="filterStatus('HoanThanh', this)">Đã hoàn thành</button>
+            <button class="filter-btn" onclick="filterStatus('DaHuy', this)">Đã huỷ</button>
+        </div>
+
+        @foreach (var apt in Model)
+        {
+            var badgeClass = apt.Status switch
+            {
+                "ChoXacNhan" => "badge-cho",
+                "DaXacNhan" => "badge-xacnhan",
+                "DaDen" => "badge-den",
+                "DangKham" => "badge-kham",
+                "HoanThanh" => "badge-hoan",
+                "DaHuy" => "badge-huy",
+                "VangMat" => "badge-vang",
+                _ => "badge-cho"
+            };
+            var isUpcoming = apt.WorkDate.Date >= DateTime.Today
+            && apt.Status != "DaHuy" && apt.Status != "HoanThanh" && apt.Status != "VangMat";
+
+            <div class="apt-card" data-status="@apt.Status" data-upcoming="@isUpcoming.ToString().ToLower()">
+                <!-- Cột ngày -->
+                <div class="apt-date-col">
+                    <div style="font-size:10px;color:#7a9bb0;margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em;">
+                        @apt.WorkDate.ToString("ddd", new System.Globalization.CultureInfo("vi-VN"))
+                    </div>
+                    <div class="apt-day">@apt.WorkDate.Day</div>
+                    <div class="apt-month">Th@(apt.WorkDate.Month)/@apt.WorkDate.Year</div>
+                </div>
+
+                <!-- Nội dung chính -->
+                <div class="apt-body">
+                    <div class="apt-doctor">@apt.DoctorName</div>
+                    <div class="apt-spec">@apt.Specialty</div>
+                    <div class="apt-meta">
+                        <span>🕐 @apt.StartTime – @apt.EndTime</span>
+                        <span>👤 @apt.PatientName</span>
+                        <span class="apt-code">@apt.BookingCode</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(apt.Note))
+                    {
+                        <div class="apt-note">📝 @apt.Note</div>
+                    }
+                    @if (!string.IsNullOrEmpty(apt.Diagnosis))
+                    {
+                        <div class="apt-diag">🩺 Chuẩn đoán: @apt.Diagnosis</div>
+                    }
+                </div>
+
+                <!-- Trạng thái + hành động -->
+                <div class="apt-actions">
+                    <span class="badge @badgeClass">@apt.StatusDisplay</span>
+
+                    @if (isUpcoming && (apt.Status == "ChoXacNhan" || apt.Status == "DaXacNhan"))
+                    {
+                        <form asp-action="Cancel" asp-controller="Booking" method="post"
+                              onsubmit="return confirm('Bạn chắc chắn muốn huỷ lịch này?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@apt.Id" />
+                            <button type="submit" class="btn-cancel">Huỷ lịch</button>
+                        </form>
+                    }
+
+                    @if (apt.Status == "DaHuy" || apt.Status == "HoanThanh")
+                    {
+                        <a asp-controller="Booking" asp-action="Index" class="btn-book-again">Đặt lại</a>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<script>
+    function filterStatus(status, btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.apt-card').forEach(card => {
+            if (status === 'all') {
+                card.style.display = '';
+            } else if (status === 'upcoming') {
+                card.style.display = card.dataset.upcoming === 'true' ? '' : 'none';
+            } else {
+                card.style.display = card.dataset.status === status ? '' : 'none';
+            }
+        });
+    }
+</script>

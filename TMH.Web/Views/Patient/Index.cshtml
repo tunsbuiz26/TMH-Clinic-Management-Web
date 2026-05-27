@@ -1,0 +1,437 @@
+@{
+    ViewBag.Title = "Cổng bệnh nhân";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var appointmentsJson = ViewBag.AppointmentsJson as string ?? "[]";
+}
+
+@section Styles {
+<style>
+/* ── Layout ─────────────────────────────────────────────────── */
+.pt-wrap { max-width: 1000px; margin: 32px auto; padding: 0 20px 32px; }
+
+/* ── Header ─────────────────────────────────────────────────── */
+.pt-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.pt-greeting { font-family:'Crimson Pro',serif; font-size:28px; font-weight:700; color:#0a4d7c; display:flex; align-items:center; gap:8px; }
+.pt-sub { font-size:13px; color:#7a9bb0; margin-top:4px; }
+.btn-book { height:40px; padding:0 22px; background:#0a4d7c; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; text-decoration:none; display:inline-flex; align-items:center; gap:7px; transition:background .15s; }
+.btn-book:hover { background:#1a6fa8; color:#fff; }
+
+/* ── Stats ──────────────────────────────────────────────────── */
+.pt-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+.pt-stat { background:#fff; border:1px solid #d4e8f5; border-radius:14px; padding:16px 18px; transition:box-shadow .15s; }
+.pt-stat:hover { box-shadow:0 4px 16px rgba(10,77,124,.08); }
+.pt-stat-num { font-size:28px; font-weight:700; color:#0a4d7c; line-height:1.1; }
+.pt-stat-lbl { font-size:12px; color:#7a9bb0; margin-top:4px; }
+.pt-stat-ico { font-size:20px; margin-bottom:6px; }
+.s2 .pt-stat-num { color:#1a6fa8; }
+.s3 .pt-stat-num { color:#2d7a52; }
+.s4 .pt-stat-num { color:#c0392b; }
+
+/* ── Tabs ───────────────────────────────────────────────────── */
+.pt-tabs { display:flex; border-bottom:2px solid #e8f0f7; margin-bottom:22px; gap:0; overflow-x:auto; }
+.pt-tab { padding:11px 18px; font-size:13px; font-weight:500; color:#7a9bb0; background:none; border:none; cursor:pointer; border-bottom:2.5px solid transparent; margin-bottom:-2px; font-family:'DM Sans',sans-serif; transition:all .15s; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.pt-tab:hover { color:#0a4d7c; }
+.pt-tab.active { color:#0a4d7c; border-bottom-color:#0a4d7c; font-weight:600; }
+.notif-badge { display:inline-flex; background:#ef4444; color:#fff; font-size:10px; font-weight:700; width:17px; height:17px; border-radius:50%; align-items:center; justify-content:center; }
+
+/* ── Appointment cards ──────────────────────────────────────── */
+.appt-card { background:#fff; border:1px solid #d4e8f5; border-radius:14px; padding:16px 20px; margin-bottom:10px; display:flex; gap:16px; align-items:flex-start; transition:box-shadow .15s; }
+.appt-card:hover { box-shadow:0 4px 18px rgba(10,77,124,.07); }
+.appt-date-box { text-align:center; background:#f0f8ff; border-radius:10px; padding:10px 14px; min-width:54px; flex-shrink:0; border:1px solid #d4e8f5; }
+.appt-date-day { font-size:22px; font-weight:700; color:#0a4d7c; line-height:1; }
+.appt-date-month { font-size:10px; color:#7a9bb0; margin-top:3px; text-transform:uppercase; font-weight:600; }
+.appt-body { flex:1; min-width:0; }
+.appt-doc { font-size:14px; font-weight:600; color:#0a4d7c; margin-bottom:3px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.appt-spec { font-size:12px; color:#7a9bb0; margin-bottom:8px; }
+.appt-meta { display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:#7a9bb0; }
+.appt-meta span { display:flex; align-items:center; gap:4px; }
+.appt-code { font-family:monospace; font-size:11px; background:#f0f8ff; padding:2px 8px; border-radius:4px; color:#1a6fa8; border:1px solid #d4e8f5; }
+.appt-note { font-size:12px; color:#555; background:#fafafa; border-left:3px solid #d4e8f5; padding:6px 10px; border-radius:0 6px 6px 0; margin-top:9px; }
+.appt-diag { font-size:12px; color:#155724; background:#f0faf4; border-left:3px solid #2d7a52; padding:6px 10px; border-radius:0 6px 6px 0; margin-top:9px; }
+.appt-actions { display:flex; flex-direction:column; gap:7px; flex-shrink:0; }
+
+/* Badges */
+.badge { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+.bc  { background:#fff3cd; color:#856404; }
+.bx  { background:#cce5ff; color:#004085; }
+.bd  { background:#d1ecf1; color:#0c5460; }
+.bk  { background:#d4edda; color:#155724; }
+
+        .bh {
+            background: linear-gradient(135deg, #d4f0e2, #b8e6cf);
+            color: #1a5c38;
+            border: 1.5px solid #6dbf95;
+            font-weight: 700;
+            box-shadow: 0 1px 4px rgba(45,122,82,.18);
+        }
+.by  { background:#fdecea; color:#c0392b; }
+.bv  { background:#f8d7da; color:#721c24; }
+
+/* Buttons */
+.btn-sm { height:32px; padding:0 14px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:5px; transition:all .15s; }
+.btn-outline { background:#fff; border-color:#d4e8f5; color:#0a4d7c; }
+.btn-outline:hover { background:#f0f8ff; border-color:#1a6fa8; }
+.btn-danger { background:#fff; border-color:#f5c6c6; color:#c0392b; }
+.btn-danger:hover { background:#fdecea; }
+.btn-primary-sm { background:#0a4d7c; border-color:#0a4d7c; color:#fff; text-decoration:none; }
+.btn-primary-sm:hover { background:#1a6fa8; border-color:#1a6fa8; color:#fff; }
+.btn-pay-now { height:30px; padding:0 12px; background:#0a4d7c; color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:5px; text-decoration:none; transition:background .15s; }
+.btn-pay-now:hover { background:#1a6fa8; color:#fff; }
+.badge-cash-pending { background:#fff8e1; color:#e65100; border:1px solid #ffcc80; }
+.badge-vnpay-pending { background:#e3f2fd; color:#0a4d7c; border:1px solid #90caf9; }
+.badge-paid { background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; }
+.payment-info { padding:8px 16px 10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; border-top:1px solid #f0f4f8; margin-top:4px; }
+
+/* ── Section labels ─────────────────────────────────────────── */
+.sec-label { font-size:13px; font-weight:600; color:#0a4d7c; margin:0 0 12px; display:flex; align-items:center; gap:7px; }
+.sec-label::after { content:''; flex:1; height:1px; background:#e8f0f7; }
+
+/* ── Empty state ────────────────────────────────────────────── */
+.empty { text-align:center; padding:40px 24px; background:#fff; border:1.5px dashed #d4e8f5; border-radius:14px; }
+.empty-ico { font-size:40px; margin-bottom:12px; }
+.empty-ttl { font-size:14px; font-weight:600; color:#0a4d7c; margin-bottom:6px; }
+.empty-desc { font-size:12px; color:#7a9bb0; margin-bottom:18px; line-height:1.6; }
+
+/* ── Result cards ───────────────────────────────────────────── */
+.result-card { background:#fff; border:1px solid #d4e8f5; border-radius:14px; overflow:hidden; margin-bottom:14px; }
+.result-head { background:linear-gradient(135deg,#f0f8ff,#e8f4fd); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d4e8f5; }
+.result-head-left .rdoc { font-size:14px; font-weight:600; color:#0a4d7c; }
+.result-head-left .rdate { font-size:12px; color:#7a9bb0; margin-top:3px; display:flex; align-items:center; gap:8px; }
+.result-body { padding:16px 20px; }
+.result-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; margin-bottom:14px; }
+.result-field .rf-lbl { font-size:11px; font-weight:600; color:#7a9bb0; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+.result-field .rf-val { font-size:13px; color:#0a4d7c; font-weight:500; }
+.result-diag { background:#f0faf4; border-radius:10px; padding:14px 16px; border-left:4px solid #2d7a52; }
+.result-diag .rd-label { font-size:11px; font-weight:700; color:#2d7a52; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+.result-diag .rd-text { font-size:13px; color:#1a4a2d; line-height:1.6; }
+.result-no-diag { background:#fafafa; border-radius:10px; padding:12px 16px; border-left:4px solid #ddd; font-size:13px; color:#9ab0bf; font-style:italic; }
+.btn-print { height:34px; padding:0 14px; background:#fff; border:1px solid #d4e8f5; color:#0a4d7c; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all .15s; }
+.btn-print:hover { border-color:#0a4d7c; background:#f0f8ff; }
+
+/* ── Profile cards ──────────────────────────────────────────── */
+.profile-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:14px; }
+.profile-card { background:#fff; border:1px solid #d4e8f5; border-radius:14px; padding:18px; display:flex; gap:14px; align-items:flex-start; transition:box-shadow .15s; }
+.profile-card:hover { box-shadow:0 4px 16px rgba(10,77,124,.08); }
+.profile-avatar { width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#0a4d7c,#1a6fa8); color:#fff; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'Crimson Pro',serif; }
+.profile-info { flex:1; min-width:0; }
+.profile-name { font-size:14px; font-weight:600; color:#0a4d7c; margin-bottom:4px; }
+.profile-meta { font-size:12px; color:#7a9bb0; margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.profile-code { font-family:monospace; font-size:11px; color:#1a6fa8; background:#f0f8ff; padding:2px 7px; border-radius:4px; border:1px solid #d4e8f5; }
+.profile-history { font-size:12px; color:#555; background:#fafafa; border-radius:6px; padding:6px 9px; margin-top:6px; border:1px solid #eee; line-height:1.5; }
+.profile-acts { display:flex; gap:7px; margin-top:10px; }
+.btn-add-profile { width:100%; height:50px; background:#f8fbff; border:2px dashed #1a6fa8; border-radius:14px; color:#1a6fa8; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:7px; }
+.btn-add-profile:hover { background:#e8f4fd; border-color:#0a4d7c; color:#0a4d7c; }
+
+/* ── Personal profile card ──────────────────────────────────── */
+.personal-card { background:#fff; border:1px solid #d4e8f5; border-radius:16px; padding:28px; }
+.personal-header { display:flex; align-items:center; gap:18px; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid #e8f0f7; }
+.personal-avatar { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#0a4d7c,#1a6fa8); color:#fff; font-size:24px; font-weight:700; display:flex; align-items:center; justify-content:center; font-family:'Crimson Pro',serif; flex-shrink:0; }
+.personal-name { font-size:20px; font-weight:700; color:#0a4d7c; font-family:'Crimson Pro',serif; }
+.personal-role { font-size:12px; color:#7a9bb0; margin-top:3px; }
+.personal-fields { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:22px; }
+.pf-item { }
+.pf-lbl { font-size:11px; font-weight:600; color:#7a9bb0; text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+.pf-val { font-size:14px; color:#0a4d7c; font-weight:500; }
+.pf-empty { color:#bbb; font-style:italic; font-weight:400; }
+.pf-tag { display:inline-flex; align-items:center; background:#f0f8ff; border:1px solid #d4e8f5; padding:2px 10px; border-radius:12px; font-size:12px; color:#1a6fa8; font-weight:500; }
+
+/* ── Notifications ──────────────────────────────────────────── */
+.notif-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.notif-item { background:#fff; border:1px solid #d4e8f5; border-radius:12px; padding:14px 16px; margin-bottom:8px; display:flex; gap:12px; cursor:pointer; transition:all .15s; }
+.notif-item:hover { background:#f8fbff; }
+.notif-item.unread { border-color:#1a6fa8; background:#f0f8ff; }
+.notif-ico { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; background:#e8f4fd; }
+.notif-item.unread .notif-ico { background:#d4eaf8; }
+.notif-body { flex:1; }
+.notif-title { font-size:13px; font-weight:600; color:#0a4d7c; margin-bottom:3px; }
+.notif-content { font-size:12px; color:#7a9bb0; line-height:1.6; }
+.notif-time { font-size:11px; color:#aab8c2; margin-top:5px; display:flex; align-items:center; gap:4px; }
+.unread-dot { width:8px; height:8px; border-radius:50%; background:#1a6fa8; flex-shrink:0; margin-top:8px; }
+.btn-read-all { height:32px; padding:0 14px; background:#fff; border:1px solid #d4e8f5; color:#0a4d7c; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; transition:all .15s; }
+.btn-read-all:hover { background:#f0f8ff; }
+
+/* ── Cancel reason cards ── */
+.cancel-reason { padding:10px 14px; border:1.5px solid #d4e8f5; border-radius:9px; font-size:13px; cursor:pointer; margin-bottom:8px; transition:all .15s; }
+.cancel-reason:hover { border-color:#c0392b; background:#fff5f5; }
+.cancel-reason.selected { border-color:#c0392b; background:#fdecea; color:#c0392b; font-weight:600; }
+
+/* ── Modal ──────────────────────────────────────────────────── */
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9990; align-items:center; justify-content:center; }
+.overlay.open { display:flex; }
+.modal-box { background:#fff; border-radius:18px; padding:28px; width:480px; max-width:96vw; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+.modal-title { font-size:16px; font-weight:700; color:#0a4d7c; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+.form-group { margin-bottom:15px; }
+.form-lbl { font-size:11px; font-weight:600; color:#3a5a72; text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:5px; }
+.form-inp { width:100%; border:1.5px solid #d4e8f5; border-radius:9px; padding:9px 12px; font-size:13px; font-family:'DM Sans',sans-serif; box-sizing:border-box; outline:none; transition:border-color .15s; background:#fff; }
+.form-inp:focus { border-color:#1a6fa8; box-shadow:0 0 0 3px rgba(26,111,168,.1); }
+.form-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.modal-footer { display:flex; gap:10px; margin-top:22px; }
+.btn-modal-save { flex:2; height:40px; background:#0a4d7c; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; }
+.btn-modal-save:hover { background:#1a6fa8; }
+.btn-modal-cancel { flex:1; height:40px; background:#f5f5f5; color:#555; border:none; border-radius:10px; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.btn-modal-cancel:hover { background:#eee; }
+.alert { border-radius:8px; padding:9px 13px; font-size:12px; margin-bottom:12px; display:none; }
+.alert-err { background:#fdecea; border:1px solid #f5c6c6; color:#c0392b; }
+.alert-ok  { background:#d4edda; border:1px solid #b8ddc4; color:#155724; }
+
+/* ── Toast ──────────────────────────────────────────────────── */
+.toast { position:fixed; top:72px; right:22px; z-index:99999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 6px 24px rgba(0,0,0,.15); display:none; max-width:340px; }
+.toast.ok  { background:#d4edda; color:#155724; border:1px solid #b8ddc4; }
+.toast.err { background:#fdecea; color:#c0392b; border:1px solid #f5c6c6; }
+@@keyframes fadeSlide { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Loading spinner ────────────────────────────────────────── */
+.spin { text-align:center; padding:32px; color:#7a9bb0; font-size:13px; }
+
+@@media (max-width:640px) {
+    .pt-stats { grid-template-columns:repeat(2,1fr); }
+    .profile-grid { grid-template-columns:1fr; }
+    .personal-fields { grid-template-columns:1fr; }
+    .result-grid { grid-template-columns:1fr; }
+}
+
+.pt-card {
+    background: #f5faff;
+    border: 1px solid #c8dff0;
+    border-radius: 18px;
+    padding: 32px 36px;
+    box-shadow: 0 4px 24px rgba(10,77,124,.08);
+}
+</style>
+}
+
+<div class="pt-wrap">
+<div class="pt-card">
+    <!-- Header -->
+    <div class="pt-header">
+        <div>
+            <div class="pt-greeting">@ViewBag.UserName 👋</div>
+            <div class="pt-sub">Cổng bệnh nhân — quản lý sức khoẻ của bạn</div>
+        </div>
+        <a href="/Booking" class="btn-book">📅 Đặt lịch khám mới</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="pt-stats">
+        <div class="pt-stat">
+            <div class="pt-stat-ico">📋</div>
+            <div class="pt-stat-num" id="stTotal">—</div>
+            <div class="pt-stat-lbl">Tổng lịch khám</div>
+        </div>
+        <div class="pt-stat s2">
+            <div class="pt-stat-ico">⏳</div>
+            <div class="pt-stat-num" id="stUp">—</div>
+            <div class="pt-stat-lbl">Sắp tới</div>
+        </div>
+        <div class="pt-stat s3">
+            <div class="pt-stat-ico">✅</div>
+            <div class="pt-stat-num" id="stDone">—</div>
+            <div class="pt-stat-lbl">Hoàn thành</div>
+        </div>
+        <div class="pt-stat s4">
+            <div class="pt-stat-ico">❌</div>
+            <div class="pt-stat-num" id="stCancel">—</div>
+            <div class="pt-stat-lbl">Đã huỷ</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="pt-tabs">
+        <button class="pt-tab active" onclick="switchTab('schedule',this)">📋 Lịch khám</button>
+        <button class="pt-tab" onclick="switchTab('notifs',this)">
+            🔔 Thông báo
+            <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+        </button>
+    </div>
+
+    <!-- TAB: Lịch khám -->
+    <div id="tab-schedule">
+        <div class="sec-label">Lịch khám sắp tới</div>
+        <div id="upcomingList"></div>
+        <div class="sec-label" style="margin-top:22px">Lịch sử khám bệnh</div>
+        <div id="historyList"></div>
+    </div>
+
+    <!-- TAB: Kết quả khám -->
+    <div id="tab-results" style="display:none">
+        <div id="resultsList"></div>
+    </div>
+
+    <!-- TAB: Hồ sơ người thân -->
+    <div id="tab-relatives" style="display:none">
+        <div class="sec-label">Danh sách hồ sơ</div>
+        <div id="relativesList"></div>
+        <button class="btn-add-profile" onclick="openProfileForm(null)">
+            ➕ Thêm hồ sơ người thân
+        </button>
+    </div>
+
+    <!-- TAB: Hồ sơ cá nhân -->
+    <div id="tab-profile" style="display:none">
+        <div class="personal-card" id="personalCard">
+            <div class="spin">Đang tải thông tin...</div>
+        </div>
+    </div>
+
+    <!-- TAB: Thông báo -->
+    <div id="tab-notifs" style="display:none">
+        <div class="notif-header">
+            <div class="sec-label" style="margin:0;flex:1">Thông báo của bạn</div>
+            <button class="btn-read-all" onclick="readAllNotifs()">Đánh dấu tất cả đã đọc</button>
+        </div>
+        <div id="notifList"></div>
+    </div>
+</div>
+</div>
+
+<!-- Modal: Hồ sơ người thân -->
+<div class="overlay" id="profileModal" onclick="if(event.target===this)closeProfileForm()">
+    <div class="modal-box">
+        <div class="modal-title" id="profileModalTitle">👪 Thêm hồ sơ người thân</div>
+        <div class="alert alert-err" id="pfErr"></div>
+        <div class="alert alert-ok"  id="pfOk"></div>
+        <div class="form-group">
+            <label class="form-lbl">Họ và tên *</label>
+            <input class="form-inp" id="pfName" placeholder="Nguyễn Văn A" />
+        </div>
+        <div class="form-row2">
+            <div class="form-group">
+                <label class="form-lbl">Ngày sinh *</label>
+                <input class="form-inp" id="pfDob" type="date" />
+            </div>
+            <div class="form-group">
+                <label class="form-lbl">Giới tính *</label>
+                <select class="form-inp" id="pfGender">
+                    <option value="">-- Chọn --</option>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-lbl">Tiền sử bệnh</label>
+            <textarea class="form-inp" id="pfHistory" rows="3" placeholder="Dị ứng, bệnh mãn tính, thuốc đang dùng..."></textarea>
+        </div>
+        <input type="hidden" id="pfId" value="0" />
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeProfileForm()">Huỷ</button>
+            <button class="btn-modal-save" onclick="saveProfile()">💾 Lưu hồ sơ</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Hồ sơ cá nhân -->
+<div class="overlay" id="personalModal" onclick="if(event.target===this)closePersonalForm()">
+    <div class="modal-box">
+        <div class="modal-title">✏️ Chỉnh sửa thông tin cá nhân</div>
+        <div class="alert alert-err" id="pmErr"></div>
+        <div class="alert alert-ok"  id="pmOk"></div>
+        <div class="form-row2">
+            <div class="form-group">
+                <label class="form-lbl">Họ và tên đệm</label>
+                <input class="form-inp" id="pmHoTenDem" placeholder="Nguyễn Thị" />
+            </div>
+            <div class="form-group">
+                <label class="form-lbl">Tên</label>
+                <input class="form-inp" id="pmTen" placeholder="Bình" />
+            </div>
+        </div>
+        <div class="form-row2">
+            <div class="form-group">
+                <label class="form-lbl">Ngày sinh</label>
+                <input class="form-inp" id="pmDob" type="date" />
+            </div>
+            <div class="form-group">
+                <label class="form-lbl">Giới tính</label>
+                <select class="form-inp" id="pmGender">
+                    <option value="">-- Chọn --</option>
+                    <option>Nam</option><option>Nữ</option><option>Khác</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row2">
+            <div class="form-group">
+                <label class="form-lbl">Nhóm máu</label>
+                <select class="form-inp" id="pmBlood">
+                    <option value="">-- Chọn --</option>
+                    <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                    <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-lbl">Số điện thoại</label>
+                <input class="form-inp" id="pmPhone" placeholder="0901234567" readonly style="background:#f8f8f8;color:#888" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-lbl">Địa chỉ</label>
+            <input class="form-inp" id="pmAddr" placeholder="123 Đường ABC, Quận 1, TP.HCM" />
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closePersonalForm()">Huỷ</button>
+            <button class="btn-modal-save" onclick="savePersonal()">💾 Lưu thay đổi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="overlay" id="cancelModal" onclick="if(event.target===this)closeCancelModal()">
+    <div class="modal-box" style="max-width:460px">
+        <div class="modal-title">❌ Huỷ lịch khám</div>
+        <p style="font-size:13px;color:#7a9bb0;margin:-8px 0 16px">Vui lòng chọn lý do để chúng tôi cải thiện dịch vụ:</p>
+        <div>
+            <div class="cancel-reason" data-val="Có việc đột xuất / bận lịch" onclick="pickReason(this)">📅 Có việc đột xuất / bận lịch</div>
+            <div class="cancel-reason" data-val="Muốn đổi sang bác sĩ / lịch khác" onclick="pickReason(this)">🔄 Muốn đổi sang bác sĩ / lịch khác</div>
+            <div class="cancel-reason" data-val="Đã khỏi bệnh, không cần khám nữa" onclick="pickReason(this)">💊 Đã khỏi bệnh, không cần khám nữa</div>
+            <div class="cancel-reason" data-val="Chi phí khám chưa phù hợp" onclick="pickReason(this)">💰 Chi phí khám chưa phù hợp</div>
+            <div class="cancel-reason" data-val="other" onclick="pickReason(this)">✏️ Khác...</div>
+        </div>
+        <textarea id="cancelOtherText" placeholder="Nhập lý do cụ thể..." rows="3"
+                  style="display:none;width:100%;margin-top:10px;padding:9px 12px;border:1.5px solid #d4e8f5;border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;box-sizing:border-box"></textarea>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeCancelModal()">Đóng</button>
+            <button class="btn-modal-save" id="btnDoCancel" onclick="doCancel()" style="background:#c0392b">Xác nhận huỷ</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div id="_serverData" style="display:none">
+    @Html.AntiForgeryToken()
+    <script type="application/json" id="_apptData">@Html.Raw(appointmentsJson)</script>
+</div>
+
+@section Scripts {
+    <script src="~/js/patient-index.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra xem URL có chứa chữ "?pending=" (từ trang Đặt lịch chuyển sang) không
+            var urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.has('pending')) {
+                var code = urlParams.get('pending');
+                var toast = document.getElementById('toast');
+
+                if (toast) {
+                    // Hiển thị toast thông báo màu xanh của chính trang Patient
+                    var msg = '📋 <strong>Đã gửi yêu cầu đặt lịch' + (code ? ' (' + code + ')' : '') + '!</strong><br/><span style="font-weight:400">Lễ tân sẽ sớm liên hệ để xếp lịch khám cho bạn.</span>';
+                    toast.innerHTML = msg;
+                    toast.className = 'toast ok';
+                    toast.style.display = 'block';
+                    toast.style.animation = 'fadeSlide 0.3s ease';
+
+                    // Tự động ẩn sau 5 giây
+                    setTimeout(function() {
+                        toast.style.display = 'none';
+                    }, 5000);
+                }
+
+                // Xóa chữ "?pending=..." trên thanh địa chỉ trình duyệt cho đẹp và chuyên nghiệp
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
+}

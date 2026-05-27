@@ -1,0 +1,45 @@
+﻿@model TMH.Shared.DTOs.VnPaymentResponseDto
+
+@{
+    ViewData["Title"] = "Kết quả thanh toán";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            @if (Model.Success)
+            {
+                <div class="card border-success">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                        <h3 class="mt-3 text-success">Thanh toán thành công!</h3>
+                        <hr />
+                        <p><strong>Mã giao dịch:</strong> @Model.TransactionId</p>
+                        <p><strong>Nội dung:</strong> @Model.OrderDescription</p>
+                        <p><strong>Mã đơn hàng:</strong> @Model.OrderId</p>
+                        <a href="/Booking/MyAppointments" class="btn btn-success mt-3">
+                            Xem lịch khám của tôi
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card border-danger">
+                    <div class="card-body text-center">
+                        <i class="fas fa-times-circle text-danger" style="font-size: 4rem;"></i>
+                        <h3 class="mt-3 text-danger">Thanh toán thất bại!</h3>
+                        <hr />
+                        <p><strong>Lý do:</strong> @Model.Message</p>
+                        <p><strong>Mã lỗi:</strong> @Model.VnPayResponseCode</p>
+                        <a href="/Booking/MyAppointments" class="btn btn-danger mt-3">
+                            Quay lại lịch khám
+                        </a>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>

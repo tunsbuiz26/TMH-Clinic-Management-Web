@@ -1,0 +1,111 @@
+/* ============================================================
+   site.css — Stylesheet dùng chung cho toàn bộ TMH.Web
+   Bộ màu chủ đạo: xanh navy (#0a4d7c) · trắng · vàng (#c9a227)
+   Font: Crimson Pro (tiêu đề) + DM Sans (body)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap');
+
+:root {
+    --blue-deep:  #0a4d7c;
+    --blue-mid:   #1a6fa8;
+    --blue-light: #e8f4fd;
+    --blue-pale:  #f0f8ff;
+    --gold:       #c9a227;
+    --gold-light: #fdf3d7;
+    --gold-pale:  #fffbef;
+    --text-dark:  #0d2d44;
+    --text-mid:   #3a5a72;
+    --text-muted: #7a9bb0;
+    --border:     #d4e8f5;
+    --ok:         #2d7a52;
+    --ok-bg:      #e6f7ef;
+    --err:        #a32d2d;
+    --err-bg:     #fcebeb;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #fff; color: var(--text-dark); line-height: 1.6; }
+
+/* ===== NAVBAR ===== */
+.nav {
+    display: flex; align-items: center; padding: 0 40px; height: 64px;
+    background: #fff; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 200;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; flex: 1; text-decoration: none; }
+.logo-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--blue-deep); display: flex; align-items: center; justify-content: center; }
+.logo-name { font-family: 'Crimson Pro', serif; font-size: 18px; font-weight: 600; color: var(--blue-deep); text-decoration: none; }
+.logo-name span { color: var(--gold); }
+.nav-links { display: flex; gap: 28px; align-items: center; }
+.nav-link { font-size: 13px; color: var(--text-mid); cursor: pointer; text-decoration: none; transition: color .15s; }
+.nav-link:hover, .nav-link.active { color: var(--blue-deep); font-weight: 500; }
+.nav-actions { display: flex; gap: 10px; align-items: center; margin-left: 28px; }
+
+.btn-outline { height: 34px; padding: 0 16px; border: 1px solid var(--blue-mid); border-radius: 8px; background: transparent; color: var(--blue-mid); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .15s; text-decoration: none; display: inline-flex; align-items: center; }
+.btn-outline:hover { background: var(--blue-light); }
+.btn-solid { height: 34px; padding: 0 16px; border: none; border-radius: 8px; background: var(--blue-deep); color: #fff; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .15s; text-decoration: none; display: inline-flex; align-items: center; }
+.btn-solid:hover { background: var(--blue-mid); }
+
+/* ===== USER DROPDOWN (khi đã đăng nhập) ===== */
+.user-dropdown { position: relative; }
+.user-toggle {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 5px 10px; border-radius: 9px; transition: background .15s;
+    border: 1px solid var(--border);
+}
+.user-toggle:hover { background: var(--blue-pale); }
+.user-avatar-sm {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--blue-deep);
+    color: #fff; font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.user-toggle-name { font-size: 13px; font-weight: 500; color: var(--text-dark); line-height: 1.2; }
+.user-toggle-role { font-size: 10px; color: var(--text-muted); display: block; }
+
+.dropdown-menu {
+    display: none; position: absolute; right: 0; top: calc(100% + 8px);
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    min-width: 200px; padding: 6px; z-index: 300;
+    box-shadow: 0 8px 24px rgba(10,77,124,0.12);
+}
+.dropdown-menu.open { display: block; }
+
+.dd-item {
+    display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+    font-size: 13px; color: var(--text-dark); text-decoration: none;
+    border-radius: 8px; transition: background .12s; white-space: nowrap;
+}
+.dd-item:hover { background: var(--blue-pale); }
+.dd-divider { height: 1px; background: var(--border); margin: 4px 8px; }
+.dd-logout { color: var(--err); }
+.dd-logout:hover { background: var(--err-bg); }
+
+/* ===== GLOBAL ALERTS ===== */
+.alert {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; font-size: 13px; font-weight: 500;
+    animation: slideDown .3s ease;
+}
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.alert-success { background: var(--ok-bg); color: var(--ok); border-bottom: 1px solid #c9f0d8; }
+.alert-error   { background: var(--err-bg); color: var(--err); border-bottom: 1px solid #f7c1c1; }
+.alert button  { background: none; border: none; cursor: pointer; font-size: 14px; color: inherit; opacity: .6; }
+.alert button:hover { opacity: 1; }
+
+/* ===== FORM VALIDATION ERROR (inline) ===== */
+.field-error { font-size: 11px; color: var(--err); display: block; margin-top: 3px; }
+.input-validation-error { border-color: var(--err) !important; }
+
+/* ===== FOOTER ===== */
+.footer { background: var(--blue-deep); color: rgba(255,255,255,0.75); padding: 36px 40px 24px; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 28px; }
+.footer-brand { font-family: 'Crimson Pro', serif; font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+.footer-brand span { color: var(--gold); }
+.footer-desc { font-size: 12px; line-height: 1.65; margin-bottom: 14px; }
+.footer-contact { font-size: 12px; line-height: 2; }
+.footer-contact strong { color: #fff; }
+.footer-heading { font-size: 12px; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
+.footer-link { display: block; font-size: 12px; color: rgba(255,255,255,0.6); cursor: pointer; margin-bottom: 7px; transition: color .15s; text-decoration: none; }
+.footer-link:hover { color: #fff; }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,0.12); padding-top: 18px; display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.4); }

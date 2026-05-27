@@ -1,0 +1,557 @@
+@{
+    ViewBag.Title = "Quản trị hệ thống";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+<style>
+.adm-wrap { max-width: 1100px; margin: 32px auto; padding: 0 20px; }
+.page-title { font-family:'Crimson Pro',serif; font-size:26px; font-weight:700; color:#0a4d7c; margin-bottom:4px; }
+.page-sub   { font-size:13px; color:#7a9bb0; margin-bottom:24px; }
+
+/* Tabs */
+.tab-bar { display:flex; gap:0; border-bottom:2px solid #d4e8f5; margin-bottom:24px; overflow-x:auto; }
+.tab-btn { padding:11px 20px; font-size:13px; font-weight:500; color:#7a9bb0; background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; border-bottom:2.5px solid transparent; margin-bottom:-2px; transition:all .15s; white-space:nowrap; }
+.tab-btn:hover  { color:#0a4d7c; }
+.tab-btn.active { color:#0a4d7c; border-bottom-color:#0a4d7c; font-weight:600; }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+
+/* Stat cards */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
+.stat-card { background:#fff; border:1px solid #d4e8f5; border-radius:14px; padding:18px 20px; transition:box-shadow .15s; }
+.stat-card:hover { box-shadow:0 4px 16px rgba(10,77,124,.08); }
+.stat-ico   { font-size:22px; margin-bottom:8px; }
+.stat-label { font-size:11px; font-weight:600; color:#7a9bb0; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+.stat-value { font-size:30px; font-weight:700; color:#0a4d7c; line-height:1.1; }
+.stat-card.green .stat-value { color:#2d7a52; }
+.stat-card.red   .stat-value { color:#c0392b; }
+.stat-card.amber .stat-value { color:#c9a227; }
+.stat-card.blue  .stat-value { color:#1a6fa8; }
+
+/* Chart */
+.chart-card { background:#fff; border:1px solid #d4e8f5; border-radius:14px; padding:22px; margin-bottom:20px; }
+.chart-title { font-size:14px; font-weight:600; color:#0a4d7c; margin-bottom:18px; }
+
+/* Table */
+.tbl-wrap { background:#fff; border:1px solid #d4e8f5; border-radius:14px; overflow:hidden; }
+.tbl-toolbar { padding:14px 18px; border-bottom:1px solid #eef3f8; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.tbl-search { height:36px; border:1px solid #d4e8f5; border-radius:8px; padding:0 12px; font-size:13px; outline:none; font-family:'DM Sans',sans-serif; min-width:220px; }
+.tbl-search:focus { border-color:#1a6fa8; }
+.data-table { width:100%; border-collapse:collapse; font-size:13px; }
+.data-table thead { background:#f0f8ff; }
+.data-table th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:#3a5a72; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid #d4e8f5; white-space:nowrap; }
+.data-table td { padding:11px 14px; border-bottom:1px solid #f0f4f8; color:#0d2d44; vertical-align:middle; }
+.data-table tr:last-child td { border-bottom:none; }
+.data-table tr:hover td { background:#f8fbff; }
+
+/* Badges */
+.badge { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.b-admin   { background:#f3e5f5; color:#6a1b9a; }
+.b-doctor  { background:#e3f2fd; color:#0d47a1; }
+.b-staff   { background:#e8f5e9; color:#1b5e20; }
+.b-patient { background:#fff8e1; color:#f57f17; }
+.b-active  { background:#d4edda; color:#155724; }
+.b-locked  { background:#f8d7da; color:#721c24; }
+.b-on  { background:#d4edda; color:#155724; }
+.b-off { background:#e2e3e5; color:#383d41; }
+.b-pub { background:#cce5ff; color:#004085; }
+.b-draft { background:#e2e3e5; color:#555; }
+
+/* Buttons */
+.btn-sm { height:30px; padding:0 13px; border-radius:7px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid #d4e8f5; background:#fff; font-family:'DM Sans',sans-serif; color:#3a5a72; transition:all .15s; display:inline-flex; align-items:center; gap:4px; }
+.btn-sm:hover { background:#0a4d7c; color:#fff; border-color:#0a4d7c; }
+.btn-sm.danger:hover { background:#c0392b; border-color:#c0392b; color:#fff; }
+.btn-sm:disabled { opacity:.4; cursor:not-allowed; pointer-events:none; }
+.btn-primary { height:36px; padding:0 18px; background:#0a4d7c; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; }
+.btn-primary:hover { background:#1a6fa8; }
+.btn-outline { height:36px; padding:0 16px; background:#fff; border:1.5px solid #0a4d7c; color:#0a4d7c; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.btn-outline:hover { background:#f0f8ff; }
+
+.loading-row { text-align:center; padding:32px; color:#7a9bb0; font-size:13px; }
+
+/* Doctor stats bars */
+.bar-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; padding:10px 14px; background:#f8fbff; border-radius:8px; }
+.bar-name { width:200px; font-size:13px; color:#0d2d44; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bar-track { flex:1; background:#e8f0f7; border-radius:6px; height:10px; overflow:hidden; }
+.bar-fill  { height:10px; background:#0a4d7c; border-radius:6px; transition:width .5s; }
+.bar-num   { width:50px; text-align:right; font-size:12px; color:#7a9bb0; flex-shrink:0; }
+
+/* Schedule toolbar */
+.sch-toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid #d4e8f5; border-radius:12px; padding:14px 18px; margin-bottom:18px; }
+.sch-label { font-size:11px; font-weight:600; color:#3a5a72; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+.sch-select, .sch-date { height:36px; border:1px solid #d4e8f5; border-radius:8px; padding:0 10px; font-size:13px; color:#0d2d44; outline:none; font-family:'DM Sans',sans-serif; }
+.sch-select:focus, .sch-date:focus { border-color:#1a6fa8; }
+
+/* Modal */
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9990; align-items:center; justify-content:center; overflow-y:auto; }
+.overlay.open { display:flex; }
+.modal-box { background:#fff; border-radius:18px; padding:28px; width:580px; max-width:96vw; margin:20px auto; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+.modal-title { font-size:16px; font-weight:700; color:#0a4d7c; margin-bottom:4px; }
+.modal-sub   { font-size:12px; color:#7a9bb0; margin-bottom:22px; }
+.form-section { margin-bottom:20px; }
+.form-section-title { font-size:11px; font-weight:700; color:#3a5a72; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #eef3f8; }
+.form-inp { width:100%; border:1.5px solid #d4e8f5; border-radius:9px; padding:9px 12px; font-size:13px; font-family:'DM Sans',sans-serif; box-sizing:border-box; outline:none; }
+.form-inp:focus { border-color:#1a6fa8; box-shadow:0 0 0 3px rgba(26,111,168,.1); }
+.alert { border-radius:9px; padding:10px 14px; font-size:12px; margin-bottom:14px; display:none; }
+.alert-err { background:#fdecea; border:1px solid #f5c6c6; color:#c0392b; }
+.alert-ok  { background:#d4edda; border:1px solid #b8ddc4; color:#155724; }
+.chip-list { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer; border:1.5px solid #d4e8f5; border-radius:8px; padding:6px 12px; user-select:none; transition:all .15s; background:#fff; }
+.chip.selected { background:#e8f4fd; border-color:#0a4d7c; color:#0a4d7c; font-weight:600; }
+.wd-chip { font-size:12px; cursor:pointer; border:1.5px solid #d4e8f5; border-radius:8px; padding:5px 11px; user-select:none; transition:all .15s; background:#fff; display:inline-flex; align-items:center; gap:5px; }
+.wd-chip.selected { background:#e8f4fd; border-color:#0a4d7c; color:#0a4d7c; font-weight:600; }
+.shift-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; background:#f8fbff; border-radius:8px; padding:8px 12px; }
+.time-inp { height:34px; border:1.5px solid #d4e8f5; border-radius:7px; padding:0 10px; font-size:13px; outline:none; }
+.time-inp:focus { border-color:#1a6fa8; }
+.preview-box { background:#f0f8ff; border:1px solid #d4e8f5; border-radius:9px; padding:12px 16px; font-size:13px; color:#0a4d7c; display:none; }
+.modal-footer { display:flex; gap:10px; margin-top:22px; }
+.btn-modal-save   { flex:2; height:42px; background:#0a4d7c; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; }
+.btn-modal-save:hover { background:#1a6fa8; }
+.btn-modal-cancel { flex:1; height:42px; background:#f0f0f0; color:#555; border:none; border-radius:10px; font-size:13px; cursor:pointer; }
+
+/* Toast */
+.toast { position:fixed; top:72px; right:22px; z-index:99999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 6px 24px rgba(0,0,0,.15); display:none; }
+.toast.ok  { background:#d4edda; color:#155724; border:1px solid #b8ddc4; }
+.toast.err { background:#fdecea; color:#c0392b; border:1px solid #f5c6c6; }
+@@keyframes fadeUp { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Admin Inbox (Tin nhắn tab) ── */
+.adm-inbox-layout { display:flex; height:520px; border:1px solid #d4e8f5; border-radius:14px; overflow:hidden; background:#fff; }
+.adm-inbox-sidebar { width:260px; border-right:1px solid #e8f0f7; display:flex; flex-direction:column; flex-shrink:0; }
+.adm-inbox-sidebar-hd { padding:14px 16px; border-bottom:1px solid #e8f0f7; font-size:13px; font-weight:600; color:#0a4d7c; display:flex; align-items:center; gap:8px; }
+.adm-inbox-conv-list { flex:1; overflow-y:auto; }
+.adm-inbox-conv-item { padding:12px 16px; border-bottom:1px solid #f0f4f8; cursor:pointer; transition:background .12s; }
+.adm-inbox-conv-item:hover { background:#f8fbff; }
+.adm-inbox-conv-item.active { background:#e8f4fd; }
+.adm-inbox-conv-name { font-size:13px; font-weight:600; color:#0a4d7c; margin-bottom:3px; display:flex; align-items:center; justify-content:space-between; }
+.adm-inbox-conv-preview { font-size:11.5px; color:#7a9bb0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px; }
+.adm-inbox-conv-time { font-size:10px; color:#aab8c2; }
+.adm-inbox-unread-dot { width:8px; height:8px; background:#ef4444; border-radius:50%; flex-shrink:0; }
+.adm-inbox-new-btn { margin:10px 12px 8px; height:34px; background:#0a4d7c; color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; font-family:'DM Sans',sans-serif; transition:background .15s; }
+.adm-inbox-new-btn:hover { background:#1a6fa8; }
+.adm-inbox-main { flex:1; display:flex; flex-direction:column; }
+.adm-inbox-main-hd { padding:12px 18px; border-bottom:1px solid #e8f0f7; display:flex; align-items:center; gap:10px; background:#f8fbff; flex-shrink:0; }
+.adm-inbox-main-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#0a4d7c,#1a6fa8); color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.adm-inbox-msgs { flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:8px; background:#f8fbff; }
+.adm-inbox-msg { display:flex; gap:8px; align-items:flex-end; }
+.adm-inbox-msg.mine { flex-direction:row-reverse; }
+.adm-inbox-msg-av { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+.adm-inbox-msg.other .adm-inbox-msg-av { background:#e0f2fe; color:#0e7490; }
+.adm-inbox-msg.mine  .adm-inbox-msg-av { background:#0a4d7c; color:#fff; }
+.adm-inbox-msg-body { display:flex; flex-direction:column; min-width:0; max-width:75%; }
+.adm-inbox-msg.mine  .adm-inbox-msg-body { align-items:flex-end; }
+.adm-inbox-msg.other .adm-inbox-msg-body { align-items:flex-start; }
+.adm-inbox-bub { padding:8px 12px; border-radius:14px; font-size:13px; line-height:1.5; word-break:break-word; }
+.adm-inbox-msg.other .adm-inbox-bub { background:#fff; border:1px solid #dbeafe; color:#0d2d44; border-bottom-left-radius:4px; }
+.adm-inbox-msg.mine  .adm-inbox-bub { background:#0a4d7c; color:#fff; border-bottom-right-radius:4px; }
+.adm-inbox-msg-meta { font-size:10px; color:#94a3b8; margin-top:2px; }
+.adm-inbox-msg.mine  .adm-inbox-msg-meta { text-align:right; }
+.adm-inbox-empty { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:#94a3b8; font-size:13px; }
+.adm-inbox-input-row { padding:10px 14px; border-top:1px solid #e8f0f7; display:flex; gap:8px; background:#fff; flex-shrink:0; }
+.adm-inbox-input { flex:1; border:1.5px solid #d4e8f5; border-radius:12px; padding:8px 12px; font-size:13px; outline:none; font-family:'DM Sans',sans-serif; }
+.adm-inbox-input:focus { border-color:#0a4d7c; }
+.adm-inbox-send-btn { width:36px; height:36px; background:#0a4d7c; border:none; border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s; }
+.adm-inbox-send-btn:hover { background:#1a6fa8; }
+.adm-inbox-send-btn svg { fill:#fff; width:15px; height:15px; }
+.adm-inbox-badge { background:#ef4444; color:#fff; font-size:10px; font-weight:700; border-radius:12px; padding:1px 6px; margin-left:5px; }
+
+@@media (max-width:640px) {
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .adm-inbox-layout { flex-direction:column; height:auto; }
+    .adm-inbox-sidebar { width:100%; height:200px; border-right:none; border-bottom:1px solid #e8f0f7; }
+}
+</style>
+}
+
+<div class="adm-wrap">
+    <div class="page-title">Quản trị hệ thống</div>
+    <div class="page-sub">Xin chào, Admin @ViewBag.UserName</div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('overview',this)">📊 Tổng quan</button>
+        <button class="tab-btn" onclick="switchTab('users',this)">👥 Tài khoản</button>
+        <button class="tab-btn" onclick="switchTab('doctors',this)">🩺 Bác sĩ</button>
+        <button class="tab-btn" onclick="switchTab('stats',this)">📈 Thống kê</button>
+        <button class="tab-btn" onclick="switchTab('schedule',this)">📅 Lịch làm việc</button>
+        <button class="tab-btn" onclick="switchTab('articles',this)">📰 Bài viết</button>
+        <button class="tab-btn" onclick="switchTab('inbox',this)" id="admInboxTabBtn">
+            💬 Tin nhắn
+            <span class="adm-inbox-badge" id="admInboxBadge" style="display:none">0</span>
+        </button>
+    </div>
+
+    <!-- ══ TAB: TỔNG QUAN ══ -->
+    <div class="tab-pane active" id="tab-overview">
+        <div class="stats-grid">
+            <div class="stat-card">        <div class="stat-ico">📋</div><div class="stat-label">Tổng lịch khám</div><div class="stat-value" id="sTotal">—</div></div>
+            <div class="stat-card green">  <div class="stat-ico">📅</div><div class="stat-label">Lịch hôm nay</div><div class="stat-value" id="sToday">—</div></div>
+            <div class="stat-card blue">   <div class="stat-ico">👥</div><div class="stat-label">Tổng bệnh nhân</div><div class="stat-value" id="sPatients">—</div></div>
+            <div class="stat-card amber">  <div class="stat-ico">🩺</div><div class="stat-label">Bác sĩ nhận lịch</div><div class="stat-value" id="sDoctors">—</div></div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card green">  <div class="stat-ico">✅</div><div class="stat-label">Hoàn thành hôm nay</div><div class="stat-value" id="sCompleted">—</div></div>
+            <div class="stat-card red">    <div class="stat-ico">❌</div><div class="stat-label">Huỷ / Vắng hôm nay</div><div class="stat-value" id="sCancelled">—</div></div>
+            <div class="stat-card">        <div class="stat-ico">🔑</div><div class="stat-label">Tổng tài khoản</div><div class="stat-value" id="sUsers">—</div></div>
+            <div class="stat-card"></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">📊 Lịch khám 7 ngày gần nhất</div>
+            <div style="position:relative;height:240px;">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB: TÀI KHOẢN ══ -->
+    <div class="tab-pane" id="tab-users">
+        <div class="tbl-wrap">
+            <div class="tbl-toolbar">
+                <input class="tbl-search" id="userSearch" placeholder="🔍 Tìm theo tên, username, email..." oninput="filterUsers()" />
+                <span id="userCount" style="font-size:12px;color:#7a9bb0;margin-left:auto;"></span>
+                <button class="btn-primary" onclick="openAddUser('Staff')" style="margin-left:10px;">+ Thêm lễ tân</button>
+            </div>
+            <div id="usersTable"><div class="loading-row">Đang tải...</div></div>
+        </div>
+    </div>
+
+    <!-- ══ TAB: BÁC SĨ ══ -->
+    <div class="tab-pane" id="tab-doctors">
+        <div class="tbl-wrap">
+            <div class="tbl-toolbar">
+                <input class="tbl-search" id="doctorSearch" placeholder="🔍 Tìm theo tên, chuyên khoa..." oninput="filterDoctors()" />
+                <button class="btn-primary" onclick="openAddUser('Doctor')" style="margin-left:auto;">+ Thêm bác sĩ</button>
+            </div>
+            <div id="doctorsTable"><div class="loading-row">Đang tải...</div></div>
+        </div>
+    </div>
+
+    <!-- ══ TAB: THỐNG KÊ ══ -->
+    <div class="tab-pane" id="tab-stats">
+        <!-- Bộ lọc báo cáo -->
+        <div class="sch-toolbar" style="margin-bottom:18px;">
+            <span class="sch-label">Từ ngày</span>
+            <input type="date" class="sch-date" id="rptFrom" />
+            <span class="sch-label">Đến ngày</span>
+            <input type="date" class="sch-date" id="rptTo" />
+            <button class="btn-primary" onclick="loadReport()">📊 Xem báo cáo</button>
+            <button class="btn-outline" onclick="printReport()" style="margin-left:auto;">🖨 In báo cáo</button>
+        </div>
+
+        <!-- KPI báo cáo -->
+        <div class="stats-grid" id="rptKpi" style="display:none;margin-bottom:18px;">
+            <div class="stat-card"><div class="stat-ico">📋</div><div class="stat-label">Tổng lịch khám</div><div class="stat-value" id="rptTotal">—</div></div>
+            <div class="stat-card green"><div class="stat-ico">✅</div><div class="stat-label">Hoàn thành</div><div class="stat-value" id="rptCompleted">—</div></div>
+            <div class="stat-card red"><div class="stat-ico">❌</div><div class="stat-label">Huỷ / Vắng</div><div class="stat-value" id="rptCancelled">—</div></div>
+            <div class="stat-card amber"><div class="stat-ico">⏳</div><div class="stat-label">Đang xử lý</div><div class="stat-value" id="rptPending">—</div></div>
+        </div>
+        <div style="display:none;gap:18px;margin-bottom:18px;" id="rptRates">
+            <div class="chart-card" style="flex:1;padding:14px 20px;">
+                <span style="font-size:13px;color:#2d7a52;font-weight:600;">✅ Tỷ lệ hoàn thành: </span>
+                <span id="rptCompRate" style="font-size:18px;font-weight:700;color:#2d7a52;">—</span>
+            </div>
+            <div class="chart-card" style="flex:1;padding:14px 20px;">
+                <span style="font-size:13px;color:#c0392b;font-weight:600;">❌ Tỷ lệ huỷ/vắng: </span>
+                <span id="rptCancRate" style="font-size:18px;font-weight:700;color:#c0392b;">—</span>
+            </div>
+        </div>
+
+        <!-- Biểu đồ 12 tháng -->
+        <div class="chart-card" style="margin-bottom:18px;">
+            <div class="chart-title">📈 Lịch khám 12 tháng gần nhất</div>
+            <div style="position:relative;height:260px;">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:18px;flex-wrap:wrap;">
+            <!-- Bác sĩ bars -->
+            <div class="chart-card" style="flex:2;min-width:280px;">
+                <div class="chart-title">🩺 Số lượng lịch khám theo bác sĩ</div>
+                <div id="doctorStatsBars"><div class="loading-row">Đang tải...</div></div>
+            </div>
+            <!-- Donut -->
+            <div class="chart-card" style="flex:1;min-width:220px;">
+                <div class="chart-title">🥧 Phân bố trạng thái (7 ngày)</div>
+                <div style="position:relative;height:220px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng theo bác sĩ (báo cáo) -->
+        <div class="tbl-wrap" id="rptDoctorTable" style="display:none;margin-top:18px;">
+            <div class="tbl-toolbar"><strong style="font-size:13px;color:#0a4d7c;">📋 Chi tiết theo bác sĩ</strong></div>
+            <div id="rptDoctorBody"></div>
+        </div>
+    </div>
+
+    <!-- ══ TAB: LỊCH LÀM VIỆC ══ -->
+    <div class="tab-pane" id="tab-schedule">
+        <div class="sch-toolbar">
+            <span class="sch-label">Bác sĩ</span>
+            <select class="sch-select" id="schDoctor">
+                <option value="">Tất cả bác sĩ</option>
+            </select>
+            <span class="sch-label">Từ</span>
+            <input type="date" class="sch-date" id="schFrom" />
+            <span class="sch-label">Đến</span>
+            <input type="date" class="sch-date" id="schTo" />
+            <button class="btn-primary" onclick="loadSchedules()">Xem</button>
+            <button class="btn-outline" onclick="openAddSchedule()" style="margin-left:auto;">+ Thêm lịch</button>
+        </div>
+        <div class="tbl-wrap">
+            <div id="scheduleTable"><div class="loading-row">Chọn bộ lọc và bấm Xem</div></div>
+        </div>
+    </div>
+
+    <!-- ══ TAB: BÀI VIẾT ══ -->
+    <div class="tab-pane" id="tab-articles">
+        <div class="tbl-wrap">
+            <div id="articlesTable"><div class="loading-row">Đang tải...</div></div>
+        </div>
+    </div>
+
+    <!-- ══ TAB: TIN NHẮN ══ -->
+    <div class="tab-pane" id="tab-inbox">
+        <div class="adm-inbox-layout">
+            <!-- Sidebar -->
+            <div class="adm-inbox-sidebar">
+                <div class="adm-inbox-sidebar-hd">💬 Tin nhắn nội bộ</div>
+                <button class="adm-inbox-new-btn" onclick="admInboxOpenNewModal()">✏️ Tin nhắn mới</button>
+                <div class="adm-inbox-conv-list" id="admInboxConvList">
+                    <div style="padding:14px;text-align:center;font-size:12px;color:#94a3b8;">Đang tải...</div>
+                </div>
+            </div>
+            <!-- Main chat area -->
+            <div class="adm-inbox-main">
+                <div class="adm-inbox-empty" id="admInboxEmpty">
+                    <div style="font-size:32px;">💬</div>
+                    <div>Chọn cuộc hội thoại để bắt đầu</div>
+                </div>
+                <div id="admInboxChatArea" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+                    <div class="adm-inbox-main-hd" id="admInboxHd">
+                        <div class="adm-inbox-main-av" id="admInboxHdAv">?</div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#0a4d7c;" id="admInboxHdName">—</div>
+                            <div style="font-size:11px;color:#7a9bb0;">Nội bộ</div>
+                        </div>
+                    </div>
+                    <div class="adm-inbox-msgs" id="admInboxMsgs"></div>
+                    <div class="adm-inbox-input-row">
+                        <input class="adm-inbox-input" id="admInboxInput" type="text"
+                               placeholder="Nhập tin nhắn..." maxlength="2000"
+                               onkeydown="if(event.key==='Enter')admInboxSend()" />
+                        <button class="adm-inbox-send-btn" onclick="admInboxSend()">
+                            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Chọn người nhận tin nhắn mới (Admin) -->
+<div class="overlay" id="admInboxNewModal" onclick="if(event.target===this)admInboxCloseNewModal()" style="display:none;align-items:center;justify-content:center;">
+    <div class="modal-box" style="max-width:380px;">
+        <div class="modal-title">✏️ Tin nhắn mới</div>
+        <select id="admInboxTargetSel" class="form-inp" style="height:40px;margin-bottom:18px;">
+            <option value="">-- Chọn người nhận --</option>
+        </select>
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="admInboxCloseNewModal()">Huỷ</button>
+            <button class="btn-modal-save" onclick="admInboxStartNew()">💬 Bắt đầu chat</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Thêm lịch hàng loạt -->
+<div class="overlay" id="schModal" onclick="if(event.target===this)closeAddSchedule()">
+    <div class="modal-box">
+        <div class="modal-title">📅 Thêm lịch làm việc</div>
+        <div class="modal-sub">Tạo lịch cho nhiều bác sĩ, nhiều ngày và nhiều ca cùng lúc</div>
+        <div class="alert alert-err" id="schErr"></div>
+        <div class="alert alert-ok"  id="schOk"></div>
+
+        <!-- Bước 1: Bác sĩ -->
+        <div class="form-section">
+            <div class="form-section-title">1. Chọn bác sĩ</div>
+            <div class="chip-list" id="schDoctorList"><span style="font-size:12px;color:#7a9bb0">Đang tải...</span></div>
+        </div>
+
+        <!-- Bước 2: Khoảng ngày -->
+        <div class="form-section">
+            <div class="form-section-title">2. Khoảng thời gian</div>
+            <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:140px;">
+                    <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Từ ngày</div>
+                    <input type="date" id="schMFrom" class="form-inp" style="height:38px;" />
+                </div>
+                <div style="flex:1;min-width:140px;">
+                    <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Đến ngày</div>
+                    <input type="date" id="schMTo" class="form-inp" style="height:38px;" />
+                </div>
+            </div>
+            <div style="font-size:11px;color:#7a9bb0;margin-bottom:8px;font-weight:600;">Áp dụng cho các thứ:</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;" id="wdContainer">
+                <!-- rendered by JS -->
+            </div>
+            <div style="display:flex;gap:7px;margin-top:6px;">
+                <button onclick="selectWD([1,2,3,4,5])"       style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#3a5a72;">T2–T6</button>
+                <button onclick="selectWD([1,2,3,4,5,6])"     style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#3a5a72;">T2–T7</button>
+                <button onclick="selectWD([0,1,2,3,4,5,6])"   style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#3a5a72;">Cả tuần</button>
+                <button onclick="selectWD([])"                 style="font-size:11px;height:27px;padding:0 11px;border:1px solid #d4e8f5;border-radius:6px;cursor:pointer;background:#fff;color:#7a9bb0;">Bỏ chọn</button>
+            </div>
+        </div>
+
+        <!-- Bước 3: Ca làm việc -->
+        <div class="form-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;" class="form-section-title">
+                <span>3. Ca làm việc</span>
+                <button onclick="addShift()" style="height:26px;padding:0 11px;background:#0a4d7c;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">+ Thêm ca</button>
+            </div>
+            <div id="shiftList"></div>
+        </div>
+
+        <!-- Bước 4: Số bệnh nhân -->
+        <div class="form-section">
+            <div class="form-section-title">4. Số bệnh nhân tối đa / ca</div>
+            <input type="number" id="schMMax" value="10" min="1" max="50" class="form-inp" style="width:120px;height:38px;" />
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-box" id="batchPreview"></div>
+
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeAddSchedule()">Huỷ</button>
+            <button class="btn-modal-save" id="schMSave" onclick="saveScheduleBatch()">✅ Tạo lịch hàng loạt</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Tạo tài khoản Staff/Doctor -->
+<div class="overlay" id="addUserModal" onclick="if(event.target===this)closeAddUser()">
+    <div class="modal-box">
+        <div class="modal-title" id="addUserTitle">➕ Thêm tài khoản</div>
+        <div class="modal-sub" id="addUserSub">Tạo tài khoản cho nhân viên lễ tân hoặc bác sĩ</div>
+        <div class="alert alert-err" id="auErr"></div>
+        <div class="alert alert-ok"  id="auOk"></div>
+
+        <input type="hidden" id="auRole" value="Staff" />
+
+        <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+                <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Họ và tên đệm *</div>
+                <input type="text" id="auHoTenDem" class="form-inp" placeholder="Nguyễn Văn" />
+            </div>
+            <div style="flex:1;">
+                <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Tên *</div>
+                <input type="text" id="auTen" class="form-inp" placeholder="An" />
+            </div>
+        </div>
+        <div style="margin-top:12px;">
+            <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Số điện thoại *</div>
+            <input type="text" id="auPhone" class="form-inp" placeholder="0901234567" />
+        </div>
+        <div style="margin-top:12px;">
+            <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Email *</div>
+            <input type="email" id="auEmail" class="form-inp" placeholder="email@example.com" />
+        </div>
+        <div style="display:flex;gap:12px;margin-top:12px;">
+            <div style="flex:1;">
+                <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Tên đăng nhập *</div>
+                <input type="text" id="auUsername" class="form-inp" placeholder="Chỉ chữ thường và số, 4–20 ký tự" />
+            </div>
+            <div style="flex:1;">
+                <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Mật khẩu *</div>
+                <input type="password" id="auPassword" class="form-inp" placeholder="Ít nhất 8 ký tự" />
+            </div>
+        </div>
+
+        <!-- Doctor-specific fields -->
+        <div id="auDoctorFields" style="display:none;margin-top:16px;border-top:1px solid #eef3f8;padding-top:16px;">
+            <div style="font-size:11px;font-weight:700;color:#3a5a72;text-transform:uppercase;margin-bottom:12px;">Thông tin chuyên môn</div>
+            <div style="display:flex;gap:12px;">
+                <div style="flex:2;">
+                    <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Chuyên khoa</div>
+                    <input type="text" id="auSpecialty" class="form-inp" value="Tai Mũi Họng" />
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Học vị</div>
+                    <input type="text" id="auDegree" class="form-inp" placeholder="BS, ThS, TS..." />
+                </div>
+            </div>
+            <div style="margin-top:10px;">
+                <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Giới thiệu</div>
+                <textarea id="auDescription" class="form-inp" rows="3" placeholder="Kinh nghiệm, thông tin giới thiệu..."></textarea>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeAddUser()">Huỷ</button>
+            <button class="btn-modal-save" id="auSaveBtn" onclick="saveAddUser()">✅ Tạo tài khoản</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Sửa thông tin bác sĩ -->
+<div class="overlay" id="editDoctorModal" onclick="if(event.target===this)closeEditDoctor()">
+    <div class="modal-box" style="width:480px;">
+        <div class="modal-title">✏️ Sửa thông tin bác sĩ</div>
+        <div class="modal-sub">Cập nhật thông tin chuyên môn</div>
+        <div class="alert alert-err" id="edErr"></div>
+        <div class="alert alert-ok"  id="edOk"></div>
+
+        <input type="hidden" id="edDoctorId" value="" />
+        <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Họ tên hiển thị</div>
+        <input type="text" id="edFullName" class="form-inp" style="margin-bottom:12px;" />
+        <div style="display:flex;gap:12px;margin-bottom:12px;">
+            <div style="flex:2;">
+                <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Chuyên khoa</div>
+                <input type="text" id="edSpecialty" class="form-inp" />
+            </div>
+            <div style="flex:1;">
+                <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Học vị</div>
+                <input type="text" id="edDegree" class="form-inp" />
+            </div>
+        </div>
+        <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Giới thiệu</div>
+        <textarea id="edDescription" class="form-inp" rows="3" style="margin-bottom:0;"></textarea>
+
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeEditDoctor()">Huỷ</button>
+            <button class="btn-modal-save" id="edSaveBtn" onclick="saveEditDoctor()">💾 Lưu thay đổi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Reset mật khẩu -->
+<div class="overlay" id="resetPwModal" onclick="if(event.target===this)closeResetPw()">
+    <div class="modal-box" style="width:400px;">
+        <div class="modal-title">🔑 Đặt lại mật khẩu</div>
+        <div class="modal-sub" id="resetPwSub"></div>
+        <div class="alert alert-err" id="rpErr"></div>
+        <div class="alert alert-ok"  id="rpOk"></div>
+        <input type="hidden" id="rpUserId" />
+        <div style="font-size:11px;color:#7a9bb0;margin-bottom:5px;">Mật khẩu mới *</div>
+        <input type="password" id="rpNewPw" class="form-inp" placeholder="Ít nhất 8 ký tự" style="margin-bottom:0;" />
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" onclick="closeResetPw()">Huỷ</button>
+            <button class="btn-modal-save" id="rpSaveBtn" onclick="saveResetPw()">🔑 Đặt lại</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script src="~/js/admin-dashboard.js" asp-append-version="true"></script>
+<script src="~/js/internal-chat.js" asp-append-version="true"></script>
+}

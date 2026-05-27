@@ -1,0 +1,1058 @@
+@{
+    ViewBag.Title = "Kết quả khám bệnh";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var apptJson = ViewBag.AppointmentsJson as string ?? "[]";
+}
+
+@section Styles {
+<style>
+    /* ── Nền & layout tổng thể ───────────────────────────────── */
+    .rs-wrap {
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 20px 60px;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .rs-header {
+        margin-bottom: 32px;
+    }
+    .rs-header-eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #c9a227;
+        margin-bottom: 8px;
+    }
+    .rs-header-title {
+        font-family: 'Crimson Pro', serif;
+        font-size: 32px;
+        font-weight: 700;
+        color: #003366;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    }
+    .rs-header-sub {
+        font-size: 13px;
+        color: #6b8fa8;
+    }
+
+    /* ── Tabs ────────────────────────────────────────────────── */
+    .rs-tabs {
+        display: flex;
+        gap: 4px;
+        background: #f4f8ff;
+        border-radius: 12px;
+        padding: 5px;
+        margin-bottom: 28px;
+        width: fit-content;
+    }
+    .rs-tab {
+        padding: 8px 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b8fa8;
+        background: none;
+        border: none;
+        border-radius: 9px;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: all .2s;
+    }
+    .rs-tab.active {
+        background: #fff;
+        color: #003366;
+        box-shadow: 0 1px 6px rgba(10,77,124,.12);
+    }
+
+    /* ── Empty state ─────────────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 60px 24px;
+        background: #fff;
+        border: 1px solid #e8f2fb;
+        border-radius: 16px;
+        color: #6b8fa8;
+    }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; }
+    .empty-title { font-size: 16px; font-weight: 600; color: #003366; margin-bottom: 6px; }
+    .empty-desc { font-size: 13px; line-height: 1.6; }
+
+    /* ── Thẻ lịch khám (danh sách) ───────────────────────────── */
+    .rs-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .rs-card {
+        background: #fff;
+        border: 1px solid #e8f2fb;
+        border-radius: 16px;
+        padding: 0;
+        overflow: hidden;
+        transition: box-shadow .2s, transform .2s;
+    }
+    .rs-card:hover {
+        box-shadow: 0 6px 24px rgba(10,77,124,.1);
+        transform: translateY(-1px);
+    }
+
+    /* Thanh màu trạng thái trái */
+    .rs-card-inner {
+        display: flex;
+        gap: 0;
+    }
+    .rs-card-stripe {
+        width: 5px;
+        flex-shrink: 0;
+        border-radius: 0;
+    }
+    .stripe-done    { background: #2d7a52; }
+    .stripe-waiting { background: #c9a227; }
+    .stripe-active  { background: #003366; }
+    .stripe-cancel  { background: #ccc; }
+
+    .rs-card-body {
+        flex: 1;
+        padding: 18px 20px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    /* Ô ngày */
+    .rs-date-box {
+        text-align: center;
+        background: #f4f8ff;
+        border-radius: 10px;
+        padding: 10px 14px;
+        min-width: 52px;
+        flex-shrink: 0;
+    }
+    .rs-date-day   { font-size: 22px; font-weight: 700; color: #003366; line-height: 1; }
+    .rs-date-month { font-size: 10px; color: #6b8fa8; text-transform: uppercase; margin-top: 2px; }
+
+    .rs-info { flex: 1; min-width: 0; }
+
+    /* Badge trạng thái */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        margin-bottom: 6px;
+    }
+    .badge-done    { background: #e6f5ee; color: #2d7a52; }
+    .badge-waiting { background: #fef9e7; color: #856404; }
+    .badge-active  { background: #e8f4fd; color: #003366; }
+    .badge-cancel  { background: #f5f5f5; color: #888; }
+
+    .rs-doctor {
+        font-size: 15px;
+        font-weight: 600;
+        color: #003366;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .rs-meta {
+        font-size: 12px;
+        color: #6b8fa8;
+        margin-bottom: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .rs-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* Ô chuẩn đoán */
+    .rs-diag {
+        background: #f0faf4;
+        border-left: 3px solid #2d7a52;
+        border-radius: 0 8px 8px 0;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #1a5c38;
+        line-height: 1.5;
+        margin-top: 4px;
+    }
+    .rs-diag-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #2d7a52;
+        margin-bottom: 3px;
+    }
+
+    /* Trạng thái đang chờ */
+    .rs-pending {
+        background: #fffbeb;
+        border-left: 3px solid #c9a227;
+        border-radius: 0 8px 8px 0;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #7a5500;
+        margin-top: 4px;
+    }
+
+    /* Nút hành động */
+    .rs-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-end;
+        flex-shrink: 0;
+    }
+    .btn-view {
+        height: 34px;
+        padding: 0 14px;
+        background: #fff;
+        color: #003366;
+        border: 1.5px solid #003366;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all .15s;
+        white-space: nowrap;
+    }
+    .btn-view:hover { background: #003366; color: #fff; }
+    .booking-chip {
+        font-family: monospace;
+        font-size: 10px;
+        background: #f4f8ff;
+        color: #1a6fa8;
+        padding: 3px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+
+    /* ── Modal phiếu kết quả ─────────────────────────────────── */
+    .print-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        z-index: 9999;
+        align-items: flex-start;
+        justify-content: center;
+        overflow-y: auto;
+        padding: 24px 16px;
+        backdrop-filter: blur(3px);
+    }
+    .print-modal.open { display: flex; }
+
+    .print-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .btn-close-print {
+        height: 38px; padding: 0 18px;
+        background: rgba(255,255,255,.9); color: #555;
+        border: none; border-radius: 9px; font-size: 13px;
+        cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── Phiếu in ────────────────────────────────────────────── */
+    .print-sheet {
+        background: #fff;
+        width: 720px;
+        max-width: 100%;
+        border-radius: 12px;
+        padding: 44px 48px;
+        font-family: 'Times New Roman', serif;
+        margin: 0 auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+
+    .phieu-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 2px solid #003366;
+        padding-bottom: 18px;
+        margin-bottom: 22px;
+    }
+    .phieu-clinic-name {
+        font-size: 15px;
+        font-weight: bold;
+        color: #003366;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+    .phieu-clinic-addr {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+        line-height: 1.5;
+    }
+    .phieu-logo-box {
+        width: 52px; height: 52px;
+        background: #003366;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .phieu-title-main {
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: #003366;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: 4px;
+    }
+    .phieu-code-line {
+        text-align: center;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        color: #6b8fa8;
+        margin-bottom: 24px;
+    }
+
+    .phieu-section {
+        margin-bottom: 20px;
+    }
+    .phieu-section-hd {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #003366;
+        background: #f4f8ff;
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .phieu-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 7px;
+        font-size: 13px;
+        padding: 0 6px;
+    }
+    .phieu-lbl {
+        color: #555;
+        min-width: 170px;
+        flex-shrink: 0;
+    }
+    .phieu-val {
+        color: #111;
+        font-weight: 500;
+        flex: 1;
+    }
+
+    /* Ô chuẩn đoán trên phiếu */
+    .phieu-diag-box {
+        border: 1.5px solid #003366;
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 14px;
+        color: #003366;
+        line-height: 1.7;
+        min-height: 70px;
+        margin: 4px 0;
+        background: #fafcff;
+    }
+    .phieu-note-box {
+        border: 1px solid #d4e8f5;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: #333;
+        min-height: 50px;
+        background: #fff;
+        line-height: 1.6;
+        margin: 4px 0;
+    }
+
+    /* Chữ ký */
+    .phieu-footer {
+        margin-top: 36px;
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px dashed #d4e8f5;
+        padding-top: 20px;
+    }
+    .phieu-sign { text-align: center; min-width: 160px; }
+    .phieu-sign-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; color: #003366; }
+    .phieu-sign-date  { font-family: 'DM Sans', sans-serif; font-size: 11px; color: #6b8fa8; margin-top: 2px; }
+    .phieu-sign-space { height: 56px; }
+
+        .phieu-sign-space1 {
+            height: 23px;
+        }
+    .phieu-sign-name  { font-size: 13px; font-weight: 600; border-top: 1px solid #333; padding-top: 4px; display: inline-block; min-width: 120px; }
+
+    .phieu-watermark {
+        text-align: center;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 10px;
+        color: #bbb;
+        margin-top: 24px;
+        padding-top: 14px;
+        border-top: 1px solid #f0f0f0;
+        line-height: 1.6;
+    }
+
+    /* ── Badge loại khám (Khám mới / Tái khám) ──────────────── */
+    .visit-type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 20px;
+        letter-spacing: .02em;
+        flex-shrink: 0;
+    }
+    .visit-new {
+        background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+        color: #1b5e20;
+        border: 1.5px solid #66bb6a;
+    }
+    .visit-return {
+        background: linear-gradient(135deg, #fff8e1, #ffecb3);
+        color: #e65100;
+        border: 1.5px solid #ffa726;
+    }
+
+    /* ── Nút đánh giá ───────────────────────────────────────── */
+    .btn-review {
+        height: 34px;
+        padding: 0 14px;
+        background: linear-gradient(135deg, #f6d365, #fda085);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all .15s;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(253,160,133,.4);
+    }
+    .btn-review:hover { opacity: .88; transform: translateY(-1px); }
+    .already-reviewed {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #2d7a52;
+        background: #e6f5ee;
+        border: 1.5px solid #81c995;
+        border-radius: 8px;
+        padding: 4px 10px;
+        white-space: nowrap;
+    }
+
+    /* ── Modal đánh giá ──────────────────────────────────────── */
+    .rv-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.5);
+        z-index: 9998;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(3px);
+    }
+    .rv-modal.open { display: flex; }
+    .rv-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 32px 28px 24px;
+        width: 420px;
+        max-width: calc(100vw - 32px);
+        box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .rv-title { font-size: 17px; font-weight: 700; color: #003366; margin-bottom: 4px; }
+    .rv-doctor { font-size: 13px; color: #6b8fa8; margin-bottom: 18px; }
+    .rv-stars {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 16px;
+        justify-content: center;
+    }
+    .rv-star {
+        font-size: 32px;
+        cursor: pointer;
+        transition: transform .1s;
+        line-height: 1;
+        color: #ddd;
+    }
+    .rv-star.on { color: #f6c90e; }
+    .rv-star:hover { transform: scale(1.15); }
+    .rv-textarea {
+        width: 100%;
+        border: 1.5px solid #d4e8f5;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-family: 'DM Sans', sans-serif;
+        resize: vertical;
+        min-height: 90px;
+        color: #333;
+        box-sizing: border-box;
+        margin-bottom: 14px;
+    }
+    .rv-textarea:focus { outline: none; border-color: #003366; }
+    .rv-footer { display: flex; gap: 10px; justify-content: flex-end; }
+    .rv-btn-cancel {
+        height: 38px; padding: 0 18px;
+        background: #f5f5f5; color: #555;
+        border: none; border-radius: 9px; font-size: 13px;
+        cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .rv-btn-submit {
+        height: 38px; padding: 0 20px;
+        background: #003366; color: #fff;
+        border: none; border-radius: 9px; font-size: 13px; font-weight: 600;
+        cursor: pointer; font-family: 'DM Sans', sans-serif;
+        transition: background .15s;
+    }
+    .rv-btn-submit:hover { background: #083d63; }
+    .rv-msg { font-size: 12px; margin-bottom: 10px; min-height: 18px; }
+    .rv-msg.err { color: #c0392b; }
+    .rv-msg.ok  { color: #2d7a52; }
+
+    /* Bệnh nhân không được in — nút in bị ẩn hoàn toàn */
+    @@media print { body * { visibility: hidden; } }
+</style>
+}
+
+<div class="rs-wrap">
+
+    <!-- Header -->
+    <div class="rs-header">
+        <div class="rs-header-eyebrow">Hồ sơ sức khoẻ</div>
+        <div class="rs-header-title">Kết quả khám bệnh</div>
+        <div class="rs-header-sub">Xem lịch sử khám và in phiếu kết quả chẩn đoán của bác sĩ</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="rs-tabs">
+        <button class="rs-tab active" id="tabDone" onclick="switchTab('done', this)">✅ Đã hoàn thành</button>
+        <button class="rs-tab" id="tabPending" onclick="switchTab('pending', this)">⏳ Đang chờ / Đang khám</button>
+        <button class="rs-tab" id="tabAll" onclick="switchTab('all', this)">📋 Tất cả</button>
+    </div>
+
+    <!-- Danh sách -->
+    <div class="rs-list" id="resultList"></div>
+</div>
+
+<!-- ── Modal phiếu kết quả + đơn thuốc ───────────────────────── -->
+<style>
+    /* ── Đơn thuốc trong modal ──────────────────────────────────── */
+    .rx-section { margin-top: 18px; border-top: 2px solid #003366; padding-top: 14px; }
+    .rx-section-title { font-size: 13px; font-weight: 700; color: #003366; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .rx-loading { text-align: center; color: #888; font-style: italic; padding: 10px 0; }
+    .rx-empty { background: #f8f9fb; border: 1px dashed #ccd9ef; border-radius: 6px; padding: 10px 14px; color: #666; font-style: italic; font-size: 12px; }
+    .rx-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; background: #f4f8ff; border: 1px solid #ccd9ef; border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; font-size: 12px; }
+    .rx-meta-row { display: flex; gap: 6px; }
+    .rx-meta-lbl { color: #555; min-width: 110px; }
+    .rx-meta-val { font-weight: 600; color: #000; }
+    .rx-diag-box { border-left: 4px solid #003366; padding: 6px 12px; margin-bottom: 12px; background: #fafcff; font-size: 13px; }
+    .rx-diag-box .rx-diag-label { font-size: 11px; color: #555; margin-bottom: 2px; }
+    .rx-diag-box .rx-diag-val { font-weight: 700; }
+    .rx-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
+    .rx-table thead { background: #003366; color: #fff; }
+    .rx-table thead th { padding: 7px 8px; text-align: left; font-weight: 600; font-size: 11px; }
+    .rx-table tbody tr:nth-child(even) { background: #f4f8ff; }
+    .rx-table tbody td { padding: 7px 8px; border-bottom: 1px solid #e0e8f4; vertical-align: top; }
+    .rx-med-name { font-weight: 700; }
+    .rx-med-inst { font-size: 11px; color: #666; font-style: italic; margin-top: 2px; }
+    .rx-notes-box { border: 1px dashed #ccc; border-radius: 4px; padding: 8px 12px; font-size: 12px; font-style: italic; color: #333; background: #fafafa; }
+    .rx-footer-note { margin-top: 10px; text-align: center; font-size: 10px; color: #888; border-top: 1px solid #ddd; padding-top: 8px; }
+    .rx-sig-row { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .rx-sig-box { text-align: center; font-size: 11px; }
+    .rx-sig-box .rx-sig-title { color: #555; margin-bottom: 2px; }
+    .rx-sig-box .rx-sig-date { color: #888; margin-bottom: 24px; }
+    .rx-sig-box .rx-sig-name { font-weight: 700; border-top: 1px solid #333; padding-top: 4px; min-width: 140px; display: inline-block; }
+</style>
+
+<div class="print-modal" id="printModal" onclick="if(event.target===this)closeDetail()">
+    <div style="width:100%;max-width:760px;">
+        <div class="print-controls">
+            <button class="btn-close-print" onclick="closeDetail()">✕ Đóng</button>
+        </div>
+
+        <div class="print-sheet" id="printSheet">
+            <!-- Tiêu đề phòng khám -->
+            <div class="phieu-top">
+                <div>
+                    <div class="phieu-clinic-name">Phòng Khám Chuyên Khoa Tai Mũi Họng</div>
+                    <div class="phieu-clinic-addr">
+                        89 Đường Linh Nam, Hoàng Mai, Hà Nội<br>
+                        Hotline: 1800 5678 &nbsp;|&nbsp; Email: info@pktaimuihong.vn
+                    </div>
+                </div>
+                <div class="phieu-logo-box">🏥</div>
+            </div>
+
+            <div class="phieu-title-main">Chi tiết kết quả khám bệnh</div>
+            <div class="phieu-code-line" id="pCode"></div>
+
+            <!-- I. Thông tin bệnh nhân -->
+            <div class="phieu-section">
+                <div class="phieu-section-hd">I. Thông tin bệnh nhân</div>
+                <div class="phieu-row"><span class="phieu-lbl">Họ và tên:</span><span class="phieu-val" id="pPatient"></span></div>
+                <div class="phieu-row"><span class="phieu-lbl">Ngày khám:</span><span class="phieu-val" id="pDate"></span></div>
+                <div class="phieu-row"><span class="phieu-lbl">Giờ khám:</span><span class="phieu-val" id="pTime"></span></div>
+                <div class="phieu-row"><span class="phieu-lbl">Mã đặt lịch:</span><span class="phieu-val" id="pBooking"></span></div>
+            </div>
+
+            <!-- II. Ghi chú / Lý do khám -->
+            <div class="phieu-section" id="pNoteSection">
+                <div class="phieu-section-hd">II. Ghi chú / Lý do khám</div>
+                <div class="phieu-note-box" id="pNote"></div>
+            </div>
+
+            <!-- III. Đơn thuốc -->
+            <div class="phieu-section rx-section" id="rxSection">
+                <div class="rx-section-title">III. Đơn thuốc</div>
+                <div id="rxContent"><div class="rx-loading">⏳ Đang tải đơn thuốc...</div></div>
+            </div>
+
+            <div class="phieu-watermark">
+                Phiếu có giá trị kể từ ngày khám. Vui lòng lưu giữ để theo dõi lịch sử điều trị.<br>
+                © 2026 Phòng Khám Tai Mũi Họng &nbsp;–&nbsp; Hệ thống TMH Solution
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<!-- ── Modal đánh giá ─────────────────────────────────────────── -->
+<div class="rv-modal" id="reviewModal" onclick="if(event.target===this)closeReviewModal()">
+    <div class="rv-box">
+        <div class="rv-title">⭐ Đánh giá lần khám</div>
+        <div class="rv-doctor" id="rvDoctorName"></div>
+        <div class="rv-stars" id="rvStars">
+            <span class="rv-star" data-v="1" onclick="setRating(1)">★</span>
+            <span class="rv-star" data-v="2" onclick="setRating(2)">★</span>
+            <span class="rv-star" data-v="3" onclick="setRating(3)">★</span>
+            <span class="rv-star" data-v="4" onclick="setRating(4)">★</span>
+            <span class="rv-star" data-v="5" onclick="setRating(5)">★</span>
+        </div>
+        <textarea class="rv-textarea" id="rvComment" placeholder="Chia sẻ nhận xét của bạn về bác sĩ và dịch vụ (tuỳ chọn)..."></textarea>
+        <div class="rv-msg" id="rvMsg"></div>
+        <div class="rv-footer">
+            <button class="rv-btn-cancel" onclick="closeReviewModal()">Huỷ</button>
+            <button class="rv-btn-submit" onclick="submitReview()">Gửi đánh giá</button>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="_apptData">@Html.Raw(apptJson)</script>
+
+@section Scripts {
+<script>
+    var allAppts = [];
+    var currentTab = 'done';
+
+    try {
+        allAppts = JSON.parse(document.getElementById('_apptData').textContent || '[]');
+        if (!Array.isArray(allAppts)) allAppts = [];
+    } catch(e) { allAppts = []; }
+
+    // Render ngay khi load
+    renderTab('done');
+
+    // ── Chuyển tab ───────────────────────────────────────────────
+    function switchTab(tab, btn) {
+        currentTab = tab;
+        document.querySelectorAll('.rs-tab').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderTab(tab);
+    }
+
+    function renderTab(tab) {
+        var list;
+        if (tab === 'done') {
+            list = allAppts.filter(function(a) {
+                if (a.status === 'HoanThanh') return true;
+                // Đã thanh toán (VNPay/tiền mặt) → xem như hoàn thành
+                if ((a.status === 'DaXacNhan' || a.status === 'DaDen' || a.status === 'DangKham')
+                    && a.paymentStatus === 'Success') return true;
+                return false;
+            });
+        } else if (tab === 'pending') {
+            list = allAppts.filter(function(a) {
+                if (a.status === 'ChoXacNhan') return true;
+                if ((a.status === 'DaXacNhan' || a.status === 'DaDen' || a.status === 'DangKham')
+                    && a.paymentStatus !== 'Success') return true;
+                return false;
+            });
+        } else {
+            list = allAppts.slice();
+        }
+
+        // Sắp xếp mới nhất lên đầu
+        list.sort(function(a, b) { return new Date(b.workDate) - new Date(a.workDate); });
+
+        var el = document.getElementById('resultList');
+
+        if (!list.length) {
+            var msgs = {
+                done:    { icon: '📋', title: 'Chưa có kết quả khám', desc: 'Kết quả sẽ hiện sau khi bác sĩ hoàn thành khám và ghi chẩn đoán.' },
+                pending: { icon: '📅', title: 'Không có lịch đang chờ', desc: 'Bạn hiện không có lịch khám nào đang chờ hoặc đang thực hiện.' },
+                all:     { icon: '🗂', title: 'Chưa có lịch khám nào', desc: 'Hãy đặt lịch để bắt đầu theo dõi lịch sử khám bệnh của bạn.' }
+            };
+            var m = msgs[tab];
+            el.innerHTML = '<div class="empty-state">' +
+                '<div class="empty-icon">' + m.icon + '</div>' +
+                '<div class="empty-title">' + m.title + '</div>' +
+                '<div class="empty-desc">' + m.desc + '</div>' +
+                '</div>';
+            return;
+        }
+
+        el.innerHTML = list.map(function(a) {
+            return buildCard(a);
+        }).join('');
+    }
+
+    // ── Build card ───────────────────────────────────────────────
+    function buildCard(a) {
+        var d = new Date(a.workDate);
+        var day   = d.getDate().toString().padStart(2, '0');
+        var month = d.toLocaleString('vi-VN', { month: 'short' });
+        var dateStr = d.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        // Trạng thái
+        var stripeClass, badgeClass, badgeText, badgeIcon;
+        switch (a.status) {
+            case 'HoanThanh':
+                stripeClass = 'stripe-done';
+                badgeClass  = 'badge-done';
+                badgeIcon   = '✅'; badgeText = 'Đã hoàn thành';
+                break;
+            case 'DangKham':
+                stripeClass = 'stripe-active';
+                badgeClass  = 'badge-active';
+                badgeIcon   = '🩺'; badgeText = 'Đang khám';
+                break;
+            case 'DaDen':
+                stripeClass = 'stripe-active';
+                badgeClass  = 'badge-active';
+                badgeIcon   = '⏳'; badgeText = 'Đã đến — chờ khám';
+                break;
+            case 'DaXacNhan':
+                if (a.paymentStatus === 'Success') {
+                    stripeClass = 'stripe-done';
+                    badgeClass  = 'badge-done';
+                    badgeIcon   = '✅'; badgeText = 'Đã hoàn thành';
+                } else {
+                    stripeClass = 'stripe-waiting';
+                    badgeClass  = 'badge-waiting';
+                    badgeIcon   = '✔'; badgeText = 'Đã xác nhận';
+                }
+                break;
+            case 'DaHuy':
+                stripeClass = 'stripe-cancel';
+                badgeClass  = 'badge-cancel';
+                badgeIcon   = '✕'; badgeText = 'Đã huỷ';
+                break;
+            case 'VangMat':
+                stripeClass = 'stripe-cancel';
+                badgeClass  = 'badge-cancel';
+                badgeIcon   = '—'; badgeText = 'Vắng mặt';
+                break;
+            default:
+                stripeClass = 'stripe-waiting';
+                badgeClass  = 'badge-waiting';
+                badgeIcon   = '🕐'; badgeText = 'Chờ xác nhận';
+        }
+
+        // Phần nội dung dưới (chuẩn đoán hoặc trạng thái)
+        var contentHtml = '';
+        var isDone = a.status === 'HoanThanh' ||
+            ((a.status === 'DaXacNhan' || a.status === 'DaDen' || a.status === 'DangKham')
+             && a.paymentStatus === 'Success');
+        if (isDone) {
+            contentHtml = '<div class="rs-diag">' +
+                '<div class="rs-diag-label">Chẩn đoán của bác sĩ</div>' +
+                esc(a.diagnosis || 'Bác sĩ chưa ghi chẩn đoán.') +
+                '</div>';
+        } else if (a.status === 'DangKham') {
+            contentHtml = '<div class="rs-pending">🩺 Bạn đang trong phòng khám. Kết quả sẽ được cập nhật sau khi bác sĩ hoàn thành.</div>';
+        } else if (a.status === 'DaDen') {
+            contentHtml = '<div class="rs-pending">⏳ Bạn đã đến phòng khám. Vui lòng chờ được gọi tên.</div>';
+        } else if (a.status === 'ChoXacNhan' || a.status === 'DaXacNhan') {
+            contentHtml = '<div class="rs-pending">📅 Lịch khám ngày ' + dateStr + ' đang chờ xác nhận từ phòng khám.</div>';
+        }
+
+        // Badge loại khám
+        var visitBadge = '';
+        if (a.status === 'HoanThanh' || a.status === 'DaXacNhan' || a.status === 'ChoXacNhan' ||
+            a.status === 'DaDen' || a.status === 'DangKham') {
+            if (a.isReturn) {
+                visitBadge = '<span class="visit-type-badge visit-return">🔄 Tái khám</span>';
+            } else {
+                visitBadge = '<span class="visit-type-badge visit-new">🆕 Khám mới</span>';
+            }
+        }
+
+        // Nút hành động
+        var actionHtml = '';
+        var isDoneAction = a.status === 'HoanThanh' ||
+            ((a.status === 'DaXacNhan' || a.status === 'DaDen' || a.status === 'DangKham')
+             && a.paymentStatus === 'Success');
+        if (isDoneAction) {
+            var idx = allAppts.indexOf(a);
+            actionHtml = '<button class="btn-view" onclick="openDetail(allAppts[' + idx + '])">👁 Xem chi tiết</button>';
+            if (a.hasReview) {
+                actionHtml += '<span class="already-reviewed">✅ Đã đánh giá</span>';
+            } else {
+                actionHtml += '<button class="btn-review" onclick="openReviewModal(' + idx + ')">⭐ Đánh giá</button>';
+            }
+        }
+
+        return '<div class="rs-card">' +
+            '<div class="rs-card-inner">' +
+                '<div class="rs-card-stripe ' + stripeClass + '"></div>' +
+                '<div class="rs-card-body">' +
+                    '<div class="rs-date-box">' +
+                        '<div class="rs-date-day">' + day + '</div>' +
+                        '<div class="rs-date-month">' + month + '</div>' +
+                    '</div>' +
+                    '<div class="rs-info">' +
+                        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">' +
+                            '<span class="status-badge ' + badgeClass + '">' + badgeIcon + ' ' + badgeText + '</span>' +
+                            visitBadge +
+                        '</div>' +
+                        '<div class="rs-doctor">' + esc(a.doctorName || '') + '</div>' +
+                        '<div class="rs-meta">' +
+                            '<span>🕐 ' + (a.startTime || '') + ' – ' + (a.endTime || '') + '</span>' +
+                            '<span>📍 ' + esc(a.specialty || 'Tai Mũi Họng') + '</span>' +
+                            '<span>👤 ' + esc(a.patientName || '') + '</span>' +
+                        '</div>' +
+                        contentHtml +
+                    '</div>' +
+                    '<div class="rs-actions">' +
+                        '<span class="booking-chip">' + esc(a.bookingCode || '') + '</span>' +
+                        actionHtml +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    // ── Mở phiếu in ─────────────────────────────────────────────
+    function openDetail(a) {
+        var d = new Date(a.workDate);
+        var dateStr  = d.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        document.getElementById('pCode').textContent       = 'Mã phiếu: ' + (a.bookingCode || '');
+        document.getElementById('pPatient').textContent    = a.patientName  || '';
+        document.getElementById('pDate').textContent       = dateStr;
+        document.getElementById('pTime').textContent       = (a.startTime || '') + ' – ' + (a.endTime || '');
+        document.getElementById('pBooking').textContent    = a.bookingCode  || '';
+
+        var pNoteSection = document.getElementById('pNoteSection');
+        if (a.note) {
+            document.getElementById('pNote').textContent = a.note;
+            pNoteSection.style.display = '';
+        } else {
+            pNoteSection.style.display = 'none';
+        }
+
+        // Reset và load đơn thuốc
+        document.getElementById('rxContent').innerHTML = '<div class="rx-loading">⏳ Đang tải đơn thuốc...</div>';
+        document.getElementById('printModal').classList.add('open');
+
+        fetch('/Patient/GetPrescription?appointmentId=' + a.id)
+            .then(function(r) {
+                if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function(json) {
+                if (!json || json.success === false) {
+                    renderPrescription(null);
+                } else {
+                    var rx = (json.data || json.Data) || null;
+                    renderPrescription(rx);
+                }
+            })
+            .catch(function() {
+                document.getElementById('rxContent').innerHTML = '<div class="rx-empty">Không thể tải dữ liệu đơn thuốc.</div>';
+            });
+    }
+
+    function renderPrescription(rx) {
+        var el = document.getElementById('rxContent');
+        if (!rx || !(rx.items || rx.Items) || (rx.items || rx.Items).length === 0) {
+            el.innerHTML = '<div class="rx-empty">Bác sĩ chưa kê đơn thuốc cho lần khám này.</div>';
+            return;
+        }
+
+        var items = rx.items || rx.Items;
+        var doctorDisplay = rx.doctorName || '';
+
+        function fmtDate(str) {
+            if (!str) return '—';
+            return new Date(str).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        var metaHtml = '<div class="rx-meta-grid">'
+            + '<div class="rx-meta-row"><span class="rx-meta-lbl">Mã đơn thuốc:</span><span class="rx-meta-val">DT-' + String(rx.id || '').padStart(6,'0') + '</span></div>'
+            + '<div class="rx-meta-row"><span class="rx-meta-lbl">Bác sĩ kê đơn:</span><span class="rx-meta-val">' + esc(doctorDisplay) + '</span></div>'
+            + '<div class="rx-meta-row"><span class="rx-meta-lbl">Ngày kê đơn:</span><span class="rx-meta-val">' + fmtDate(rx.issuedAt) + '</span></div>'
+            + '<div class="rx-meta-row"><span class="rx-meta-lbl">Mã bệnh nhân:</span><span class="rx-meta-val">' + esc(rx.patientRecordCode || '') + '</span></div>'
+            + '</div>';
+
+        var diagHtml = '<div class="rx-diag-box"><div class="rx-diag-label">CHẨN ĐOÁN</div><div class="rx-diag-val">' + esc(rx.diagnosis || '—') + '</div></div>';
+
+        var rows = items.map(function(item, idx) {
+            var name = item.medicineName || item.MedicineName || '';
+            var inst = item.instructions || item.Instructions || '';
+            var dosage = item.dosage || item.Dosage || '';
+            var freq = item.frequency || item.Frequency || '';
+            var days = item.durationDays || item.DurationDays || '';
+            var qty = item.quantity || item.Quantity || '';
+            return '<tr>'
+                + '<td style="text-align:center">' + (idx+1) + '</td>'
+                + '<td><div class="rx-med-name">' + esc(name) + '</div>'
+                + (inst ? '<div class="rx-med-inst">↳ ' + esc(inst) + '</div>' : '')
+                + '</td>'
+                + '<td>' + esc(dosage) + '</td>'
+                + '<td>' + esc(freq) + '</td>'
+                + '<td style="text-align:center">' + esc(String(days)) + ' ngày</td>'
+                + '<td style="text-align:center">' + esc(String(qty)) + '</td>'
+                + '</tr>';
+        }).join('');
+
+        var tableHtml = '<table class="rx-table">'
+            + '<thead><tr>'
+            + '<th style="width:32px">STT</th>'
+            + '<th>Tên thuốc</th>'
+            + '<th style="width:90px">Liều lượng</th>'
+            + '<th style="width:110px">Tần suất</th>'
+            + '<th style="width:75px">Số ngày</th>'
+            + '<th style="width:75px">Số lượng</th>'
+            + '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+        var notesHtml = (rx.notes || rx.Notes)
+            ? '<div style="margin-bottom:10px;"><div style="font-size:11px;color:#555;margin-bottom:4px;">LỜI DẶN / GHI CHÚ</div><div class="rx-notes-box">' + esc(rx.notes || rx.Notes) + '</div></div>'
+            : '';
+
+        var sigHtml = '<div class="rx-sig-row"><div class="rx-sig-box">'
+            + '<div class="rx-sig-title">Bác sĩ kê đơn</div>'
+            + '<div class="rx-sig-date">Ngày ' + fmtDate(rx.issuedAt) + '</div>'
+            + '<div class="rx-sig-name">' + esc(doctorDisplay) + '</div>'
+            + '</div></div>';
+
+        var footerHtml = '<div class="rx-footer-note">Đơn thuốc có giá trị trong vòng 30 ngày kể từ ngày kê đơn. Vui lòng đọc kỹ hướng dẫn sử dụng thuốc.</div>';
+
+        el.innerHTML = metaHtml + diagHtml + tableHtml + notesHtml + sigHtml + footerHtml;
+    }
+
+    function closeDetail() {
+        document.getElementById('printModal').classList.remove('open');
+    }
+
+    // Escape HTML
+    function esc(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Review modal ─────────────────────────────────────────────
+    var _rvApptIdx = -1;
+    var _rvRating  = 0;
+
+    function openReviewModal(idx) {
+        _rvApptIdx = idx;
+        _rvRating  = 0;
+        var a = allAppts[idx];
+        document.getElementById('rvDoctorName').textContent = 'Bác sĩ: ' + (a.doctorName || '');
+        document.getElementById('rvComment').value = '';
+        document.getElementById('rvMsg').textContent = '';
+        document.getElementById('rvMsg').className = 'rv-msg';
+        document.querySelectorAll('.rv-star').forEach(function(s){ s.classList.remove('on'); });
+        document.getElementById('reviewModal').classList.add('open');
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').classList.remove('open');
+    }
+
+    function setRating(val) {
+        _rvRating = val;
+        document.querySelectorAll('.rv-star').forEach(function(s){
+            s.classList.toggle('on', parseInt(s.dataset.v) <= val);
+        });
+    }
+
+    function submitReview() {
+        var msgEl = document.getElementById('rvMsg');
+        if (_rvRating < 1) {
+            msgEl.textContent = 'Vui lòng chọn số sao đánh giá.';
+            msgEl.className = 'rv-msg err';
+            return;
+        }
+        var a = allAppts[_rvApptIdx];
+        var dto = {
+            appointmentId: a.id,
+            rating: _rvRating,
+            comment: document.getElementById('rvComment').value.trim() || null
+        };
+        var token = document.querySelector('input[name="__RequestVerificationToken"]');
+        fetch('/Booking/SubmitReview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token ? token.value : ''
+            },
+            body: JSON.stringify(dto)
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                msgEl.textContent = '✅ Cảm ơn bạn đã đánh giá!';
+                msgEl.className = 'rv-msg ok';
+                allAppts[_rvApptIdx].hasReview = true;
+                setTimeout(function(){
+                    closeReviewModal();
+                    renderTab(currentTab);
+                }, 1200);
+            } else {
+                msgEl.textContent = '❌ ' + (res.message || 'Có lỗi xảy ra.');
+                msgEl.className = 'rv-msg err';
+            }
+        })
+        .catch(function(){
+            msgEl.textContent = '❌ Không kết nối được máy chủ.';
+            msgEl.className = 'rv-msg err';
+        });
+    }
+</script>
+}
