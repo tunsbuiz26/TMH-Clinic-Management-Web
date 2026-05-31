@@ -334,4 +334,4 @@ FodyWeavers.xsd
 **/appsettings.*.json
 
 # Ngoại lệ: cho phép commit file mẫu không chứa secrets thật
-!**/appsettings.example.json
+!**/appsettings.example.json".claude/" 
